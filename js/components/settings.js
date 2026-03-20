@@ -209,7 +209,7 @@ function AIConfiguration() {
   return html`
     <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-5">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-navy-900">Firebase Configuration</h2>
+        <h2 class="text-lg font-semibold text-navy-900">AI Configuration</h2>
         <span class=${
           isConfigured
             ? 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200'
@@ -220,16 +220,21 @@ function AIConfiguration() {
         </span>
       </div>
 
-      <!-- Help text -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p class="text-sm text-blue-800 font-medium mb-2">Setup Instructions</p>
-        <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside leading-relaxed">
-          <li>Create a Firebase project at <span class="font-mono">console.firebase.google.com</span></li>
-          <li>Enable the Vertex AI API in Google Cloud Console</li>
-          <li>Copy your Firebase config from Project Settings > General > Your apps</li>
-          <li>Paste the values below</li>
-        </ol>
+      <!-- Default AI info -->
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <p class="text-sm text-green-800 font-medium mb-1">AI is ready to use</p>
+        <p class="text-xs text-green-700 leading-relaxed">
+          Passdown AI uses Google Gemini 2.5 Flash (free tier). Just click the AI chat button and sign in with Google — no setup required.
+          The fields below are only needed if you want to use your own Firebase project.
+        </p>
       </div>
+
+      <!-- Advanced: Custom Firebase config -->
+      <details class="border border-slate-200 rounded-lg">
+        <summary class="px-4 py-2 text-sm font-medium text-slate-600 cursor-pointer hover:bg-slate-50">
+          Advanced: Use your own Firebase project
+        </summary>
+        <div class="px-4 pb-4 pt-2 space-y-3 border-t border-slate-200">
 
       <!-- Config fields -->
       <div class="space-y-3">
@@ -294,12 +299,15 @@ function AIConfiguration() {
         <p class="text-sm text-red-600 font-medium">Connection test failed. Check your config values.</p>
       `}
 
+        </div>
+      </details>
+
       <${ConfirmDialog}
         isOpen=${confirmClear}
         onCancel=${() => setConfirmClear(false)}
         onConfirm=${handleClear}
         title="Clear Firebase Config"
-        message="This will remove your Firebase configuration and disable AI features. You can re-enter it later."
+        message="This will remove your custom Firebase configuration. The built-in AI will continue to work."
         confirmText="Clear Config"
         danger=${true}
       />

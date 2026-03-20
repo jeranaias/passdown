@@ -2,7 +2,7 @@
 // Firebase AI Logic abstraction layer for Passdown Phase 2.
 // Uses Gemini 2.5 Flash via Firebase AI (free tier, no API key management).
 
-import { CATEGORIES } from './config.js';
+import { CATEGORIES, FIREBASE_CONFIG } from './config.js';
 
 // Firebase SDK imports (CDN ES modules)
 let firebaseApp = null;
@@ -107,6 +107,20 @@ const AIService = {
 
   isAvailable() {
     return this.initialized && this._model !== null;
+  },
+
+  // ── Auto-initialize with built-in Firebase config ───────────────────────
+  async autoInit() {
+    if (this.initialized) return;
+    // Use user's custom config if set, otherwise use built-in
+    const settings = (() => {
+      try {
+        const raw = localStorage.getItem('passdown_settings');
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) { return null; }
+    })();
+    const config = (settings?.firebaseConfig?.apiKey) ? settings.firebaseConfig : FIREBASE_CONFIG;
+    await this.init(config);
   },
 
   isSignedIn() {

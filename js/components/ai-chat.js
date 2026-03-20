@@ -535,19 +535,15 @@ export default function AIChatSidebar({ isOpen, onClose }) {
       </div>
 
       <!-- Body -->
-      ${!aiAvailable && html`
-        <${SetupInstructions} />
-      `}
-
-      ${aiAvailable && !AIService.isSignedIn() && html`
+      ${!AIService.isSignedIn() && html`
         <${SignInPrompt} onSignIn=${() => AIService.signIn()} />
       `}
 
-      ${aiAvailable && AIService.isSignedIn() && messages.length === 0 && !loading && html`
+      ${AIService.isSignedIn() && messages.length === 0 && !loading && html`
         <${WelcomePrompt} onSuggestion=${handleSuggestion} currentPage=${currentPage} />
       `}
 
-      ${aiAvailable && AIService.isSignedIn() && (messages.length > 0 || loading) && html`
+      ${AIService.isSignedIn() && (messages.length > 0 || loading) && html`
         <div class="flex-1 overflow-y-auto p-4">
           ${messages.map((msg, i) => html`
             <${MessageBubble} key=${i} message=${msg} />
@@ -572,8 +568,8 @@ export default function AIChatSidebar({ isOpen, onClose }) {
         />
       `}
 
-      <!-- Input (only when AI is available and signed in) -->
-      ${aiAvailable && AIService.isSignedIn() && html`
+      <!-- Input (only when signed in) -->
+      ${AIService.isSignedIn() && html`
         <${ChatInput} onSend=${handleSend} disabled=${loading} />
       `}
     </div>

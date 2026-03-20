@@ -63,6 +63,16 @@ const DEFAULT_SETTINGS = Object.freeze({
   aiEnabled: false,
 });
 
+// ─── Built-in Firebase Config (free tier, users just sign in with Google) ────
+export const FIREBASE_CONFIG = Object.freeze({
+  apiKey: "AIzaSyAaMZ5HNwKBCNIaf8LYJXQ7K6RMe-FA_B4",
+  authDomain: "mli-automate-hours.firebaseapp.com",
+  projectId: "mli-automate-hours",
+  storageBucket: "mli-automate-hours.firebasestorage.app",
+  messagingSenderId: "770958006562",
+  appId: "1:770958006562:web:b22a5b4cd36ec6138fad7b",
+});
+
 // ─── Config ─────────────────────────────────────────────────────────────────
 const CONFIG = Object.freeze({
   VERSION: '1.0.0',
@@ -87,4 +97,5 @@ export {
   RECURRENCES,
   DEFAULT_BILLET,
   DEFAULT_SETTINGS,
+  FIREBASE_CONFIG,
 };

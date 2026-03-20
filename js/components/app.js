@@ -432,10 +432,8 @@ export default function App() {
     setSettingsState(data.settings);
     setSearchIndex(buildIndex(data.entries));
 
-    // Initialize AI if Firebase config is available
-    if (data.settings.firebaseConfig && data.settings.firebaseConfig.apiKey) {
-      AIService.init(data.settings.firebaseConfig);
-    }
+    // Auto-initialize AI with built-in Firebase config (or user's custom config)
+    AIService.autoInit().catch(err => console.warn('[App] AI auto-init:', err.message));
   }, []);
 
   // Hash routing
