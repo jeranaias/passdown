@@ -162,7 +162,7 @@ KNOWLEDGE BASE:
     });
 
     let charCount = prompt.length;
-    const MAX_CHARS = 80000; // Smaller budget for local models
+    const MAX_CHARS = 6000; // Conservative budget for small local models (1.7B-3.8B)
     let truncated = false;
 
     for (const entry of sortedEntries) {
