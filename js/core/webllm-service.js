@@ -103,6 +103,11 @@ const WebLLMService = {
     return this.modelId || null;
   },
 
+  // Alias for init — settings/chat components call load()
+  async load(modelId, onProgress) {
+    return this.init(modelId, onProgress);
+  },
+
   // ── Multi-Turn Chat ─────────────────────────────────────────────────────
 
   async chat(messages, systemPrompt) {
