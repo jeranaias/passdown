@@ -198,6 +198,8 @@ function OfflineAIConfiguration() {
       setModelReady(true);
       setModelLoaded(true);
       showToast('Offline AI model ready', 'success');
+      // Notify other components (AI chat sidebar)
+      window.dispatchEvent(new CustomEvent('webllm-ready'));
     } catch (err) {
       console.error('[OfflineAI] Download failed:', err);
       showToast('Model download failed: ' + err.message, 'error');

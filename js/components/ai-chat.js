@@ -521,6 +521,11 @@ export default function AIChatSidebar({ isOpen, onClose }) {
     return () => window.removeEventListener('webllm-ready', handler);
   }, []);
 
+  // Re-check availability when panel opens
+  useEffect(() => {
+    if (isOpen) setWebllmReady(WebLLMService.isAvailable());
+  }, [isOpen]);
+
   // Get current page from hash
   const getCurrentPage = useCallback(() => {
     const raw = window.location.hash.replace(/^#\/?/, '');
