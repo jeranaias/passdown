@@ -3,6 +3,7 @@
 // Optional ?category=xxx to pre-select a category.
 
 import { html, CATEGORIES, PRIORITIES, FREQUENCIES, RECURRENCES, VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
+import AIService from '../core/ai-service.js';
 import { AppContext } from './app.js';
 import { Button, Tag, TextInput, TextArea, Select, ConfirmDialog, showToast } from '../shared/ui.js';
 import {
@@ -10,6 +11,7 @@ import {
   IconEdit, IconEye, IconTrash, IconCheck, IconStar,
 } from '../shared/icons.js';
 import { MarkdownPreview } from '../shared/markdown.js';
+import FileDropZone from './file-drop-zone.js';
 
 const { useState, useCallback, useContext, useMemo, useRef } = React;
 
@@ -164,6 +166,10 @@ export default function Capture() {
   // ─── Content editor: edit vs preview ──────────────────────────────────────
 
   const [showPreview, setShowPreview] = useState(false);
+
+  // ─── File import section ────────────────────────────────────────────────
+
+  const [fileImportOpen, setFileImportOpen] = useState(false);
 
   // ─── Validation state ─────────────────────────────────────────────────────
 
@@ -376,6 +382,44 @@ export default function Capture() {
             `}
           </div>
 
+          <!-- File Import -->
+          <div>
+            <button
+              type="button"
+              onClick=${() => setFileImportOpen(o => !o)}
+              class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"
+            >
+              <span class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="text-slate-500">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <polyline points="9 15 12 12 15 15" />
+                </svg>
+                Import from File
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class=${'transition-transform ' + (fileImportOpen ? '' : '-rotate-90')}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            ${fileImportOpen && html`
+              <div class="mt-2">
+                <${FileDropZone}
+                  onContent=${({ content: fileContent, title: fileTitle }) => {
+                    setContent(prev => prev ? prev + '\n\n' + fileContent : fileContent);
+                    if (!title.trim() && fileTitle) setTitle(fileTitle);
+                    showToast('File converted to markdown. Review and edit as needed.', 'success');
+                  }}
+                  onError=${(msg) => showToast(msg, 'error')}
+                />
+              </div>
+            `}
+          </div>
+
           <!-- Content with Markdown Toggle -->
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -497,6 +541,18 @@ export default function Capture() {
         <${IssueFields} meta=${meta} updateMeta=${updateMeta} />
       `}
 
+      <!-- AI Assist -->
+      <${AIAssistPanel}
+        title=${title}
+        content=${content}
+        category=${category}
+        tags=${tags}
+        priority=${priority}
+        isEdit=${isEdit}
+        onAddTag=${(tag) => { if (!tags.includes(tag)) setTags(prev => [...prev, tag]); }}
+        onSetContent=${setContent}
+      />
+
       <!-- Action Buttons -->
       <div class="flex items-center justify-between">
         <div>
@@ -531,6 +587,190 @@ export default function Capture() {
         confirmText="Delete"
         danger=${true}
       />
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI Assist Panel
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AIAssistPanel({ title, content, category, tags, priority, isEdit, onAddTag, onSetContent }) {
+  const [expanded, setExpanded] = useState(false);
+  const [suggestedTags, setSuggestedTags] = useState([]);
+  const [improvements, setImprovements] = useState('');
+  const [genDescription, setGenDescription] = useState('');
+  const [loadingTags, setLoadingTags] = useState(false);
+  const [loadingImprove, setLoadingImprove] = useState(false);
+  const [loadingGenerate, setLoadingGenerate] = useState(false);
+
+  const aiAvailable = AIService.isAvailable();
+
+  const handleSuggestTags = useCallback(async () => {
+    setLoadingTags(true);
+    setSuggestedTags([]);
+    try {
+      const result = await AIService.suggestTags(title, content);
+      if (Array.isArray(result) && result.length > 0) {
+        setSuggestedTags(result.filter(t => !tags.includes(t)));
+      } else {
+        showToast('No tag suggestions generated.', 'info');
+      }
+    } catch (err) {
+      showToast('Failed to suggest tags: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setLoadingTags(false);
+    }
+  }, [title, content, tags]);
+
+  const handleImproveContent = useCallback(async () => {
+    setLoadingImprove(true);
+    setImprovements('');
+    try {
+      const result = await AIService.improveContent({ title, content, category, tags, priority });
+      if (result && typeof result === 'string') {
+        setImprovements(result);
+      } else {
+        showToast('No improvement suggestions generated.', 'info');
+      }
+    } catch (err) {
+      showToast('Failed to get suggestions: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setLoadingImprove(false);
+    }
+  }, [title, content, category, tags, priority]);
+
+  const handleGenerate = useCallback(async () => {
+    if (!genDescription.trim()) {
+      showToast('Enter a brief description first.', 'info');
+      return;
+    }
+    setLoadingGenerate(true);
+    try {
+      const result = await AIService.generateFromDescription(genDescription.trim(), category);
+      if (result) {
+        onSetContent(result);
+        setGenDescription('');
+        showToast('Content generated. Review and edit as needed.', 'success');
+      } else {
+        showToast('No content generated.', 'info');
+      }
+    } catch (err) {
+      showToast('Failed to generate content: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setLoadingGenerate(false);
+    }
+  }, [genDescription, category, onSetContent]);
+
+  const spinner = html`
+    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  `;
+
+  if (!aiAvailable) {
+    return html`
+      <div class="bg-slate-50 rounded-lg border border-slate-200 px-4 py-3">
+        <p class="text-sm text-slate-400 italic">AI assist available when Firebase is configured in Settings.</p>
+      </div>
+    `;
+  }
+
+  return html`
+    <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
+      <button
+        type="button"
+        onClick=${() => setExpanded(e => !e)}
+        class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors rounded-lg"
+      >
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
+          AI Assist
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class=${'transition-transform ' + (expanded ? '' : '-rotate-90')}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      ${expanded && html`
+        <div class="px-4 pb-4 space-y-4 border-t border-slate-100 pt-4">
+
+          <!-- Suggest Tags -->
+          <div>
+            <${Button}
+              variant="secondary"
+              size="sm"
+              onClick=${handleSuggestTags}
+              disabled=${loadingTags}
+            >
+              ${loadingTags ? spinner : 'Suggest Tags'}
+            <//>
+            ${suggestedTags.length > 0 && html`
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${suggestedTags.map(tag => html`
+                  <button
+                    key=${tag}
+                    type="button"
+                    onClick=${() => { onAddTag(tag); setSuggestedTags(prev => prev.filter(t => t !== tag)); }}
+                    class="px-2 py-1 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-full hover:bg-purple-100 transition-colors cursor-pointer"
+                    title="Click to add this tag"
+                  >
+                    + ${tag}
+                  </button>
+                `)}
+              </div>
+            `}
+          </div>
+
+          <!-- Improve Content -->
+          <div>
+            <${Button}
+              variant="secondary"
+              size="sm"
+              onClick=${handleImproveContent}
+              disabled=${loadingImprove}
+            >
+              ${loadingImprove ? spinner : 'Improve Content'}
+            <//>
+            ${improvements && html`
+              <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
+                ${improvements}
+              </div>
+            `}
+          </div>
+
+          <!-- Generate from Description (create mode only) -->
+          ${!isEdit && html`
+            <div>
+              <label class="text-sm font-medium text-slate-600 block mb-1">Generate from Description</label>
+              <textarea
+                value=${genDescription}
+                onChange=${(e) => setGenDescription(e.target.value)}
+                rows="3"
+                placeholder="Briefly describe what this entry should cover, and AI will generate structured content..."
+                class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                       text-slate-700 placeholder-slate-400 resize-y
+                       focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
+              />
+              <${Button}
+                variant="secondary"
+                size="sm"
+                onClick=${handleGenerate}
+                disabled=${loadingGenerate || !genDescription.trim()}
+                className="mt-1"
+              >
+                ${loadingGenerate ? spinner : 'Generate Content'}
+              <//>
+            </div>
+          `}
+        </div>
+      `}
     </div>
   `;
 }

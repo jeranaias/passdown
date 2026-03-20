@@ -169,7 +169,7 @@ export default function StartHere() {
   }, [startHereIds, setStartHere]);
 
   const handleEdit = useCallback((entry) => {
-    navigate('edit?id=' + entry.id);
+    navigate('capture?id=' + entry.id);
   }, [navigate]);
 
   const headerText = billet.title

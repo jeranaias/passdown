@@ -181,11 +181,11 @@ export default function CalendarView() {
   const upcoming = useMemo(() => getUpcomingEvents(calendarEntries), [calendarEntries]);
 
   const handleEdit = useCallback((entry) => {
-    navigate('edit?id=' + entry.id + '&category=calendar');
+    navigate('capture?id=' + entry.id + '&category=calendar');
   }, [navigate]);
 
   const handleAdd = useCallback(() => {
-    navigate('new?category=calendar');
+    navigate('capture?category=calendar');
   }, [navigate]);
 
   if (calendarEntries.length === 0) {

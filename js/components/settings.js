@@ -5,6 +5,7 @@ import { html } from '../core/config.js';
 import CONFIG, { VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
 import { useApp } from './app.js';
 import Store from '../core/store.js';
+import AIService from '../core/ai-service.js';
 import { Button, ConfirmDialog, showToast } from '../shared/ui.js';
 import { IconWarning } from '../shared/icons.js';
 
@@ -131,30 +132,177 @@ function Preferences() {
   `;
 }
 
-// ─── AI Configuration (Phase 2 placeholder) ──────────────────────────────────
+// ─── AI Configuration ─────────────────────────────────────────────────────────
+
+const FIREBASE_FIELDS = [
+  { key: 'apiKey',            label: 'API Key',             placeholder: 'AIzaSy...' },
+  { key: 'authDomain',       label: 'Auth Domain',         placeholder: 'my-project.firebaseapp.com' },
+  { key: 'projectId',        label: 'Project ID',          placeholder: 'my-project' },
+  { key: 'storageBucket',    label: 'Storage Bucket',      placeholder: 'my-project.appspot.com' },
+  { key: 'messagingSenderId', label: 'Messaging Sender ID', placeholder: '123456789' },
+  { key: 'appId',            label: 'App ID',              placeholder: '1:123456789:web:abc123' },
+];
 
 function AIConfiguration() {
+  const { settings, setSettings } = useApp();
+  const existing = settings.firebaseConfig || {};
+  const [form, setForm] = useState({ ...existing });
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null); // 'success' | 'error' | null
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const isConfigured = !!(settings.firebaseConfig && settings.firebaseConfig.apiKey);
+  const aiEnabled = settings.aiEnabled || false;
+
+  const inputClass = 'w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500';
+  const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
+
+  const updateField = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+    setDirty(true);
+    setTestResult(null);
+  };
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      await AIService.init(form);
+      setTestResult('success');
+      showToast('Firebase connection successful', 'success');
+    } catch (err) {
+      setTestResult('error');
+      showToast('Connection failed: ' + err.message, 'error');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSave = () => {
+    setSettings({ ...settings, firebaseConfig: { ...form } });
+    setDirty(false);
+    showToast('Firebase configuration saved', 'success');
+    // Re-initialize AI with the new config
+    if (form.apiKey) {
+      AIService.init(form).catch(() => {});
+    }
+  };
+
+  const handleClear = () => {
+    setForm({});
+    setSettings({ ...settings, firebaseConfig: null, aiEnabled: false });
+    setDirty(false);
+    setTestResult(null);
+    setConfirmClear(false);
+    AIService.destroy();
+    showToast('Firebase configuration cleared', 'info');
+  };
+
+  const handleToggleAI = (enabled) => {
+    setSettings({ ...settings, aiEnabled: enabled });
+    if (enabled && settings.firebaseConfig && settings.firebaseConfig.apiKey) {
+      AIService.init(settings.firebaseConfig).catch(() => {});
+    }
+  };
+
   return html`
-    <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-3 opacity-60">
-      <h2 class="text-lg font-semibold text-slate-500">AI Configuration</h2>
-      <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
-        <p class="text-sm text-slate-500">
-          AI features coming in Phase 2. Firebase AI Logic will enable natural language Q&A
-          over your knowledge base.
-        </p>
+    <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-navy-900">Firebase Configuration</h2>
+        <span class=${
+          isConfigured
+            ? 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200'
+            : 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-slate-50 text-slate-500 border border-slate-200'
+        }>
+          <span class=${isConfigured ? 'w-2 h-2 rounded-full bg-green-500' : 'w-2 h-2 rounded-full bg-slate-400'} />
+          ${isConfigured ? 'Connected' : 'Not configured'}
+        </span>
       </div>
-      <div class="space-y-3 pointer-events-none">
-        <div>
-          <label class="block text-sm font-medium text-slate-400 mb-1">Firebase Project ID</label>
-          <input type="text" disabled placeholder="my-project-id"
-            class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-400 cursor-not-allowed" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-400 mb-1">Firebase API Key</label>
-          <input type="text" disabled placeholder="AIza..."
-            class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md text-slate-400 cursor-not-allowed" />
-        </div>
+
+      <!-- Help text -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p class="text-sm text-blue-800 font-medium mb-2">Setup Instructions</p>
+        <ol class="text-xs text-blue-700 space-y-1 list-decimal list-inside leading-relaxed">
+          <li>Create a Firebase project at <span class="font-mono">console.firebase.google.com</span></li>
+          <li>Enable the Vertex AI API in Google Cloud Console</li>
+          <li>Copy your Firebase config from Project Settings > General > Your apps</li>
+          <li>Paste the values below</li>
+        </ol>
       </div>
+
+      <!-- Config fields -->
+      <div class="space-y-3">
+        ${FIREBASE_FIELDS.map(field => html`
+          <div key=${field.key}>
+            <label class=${labelClass}>${field.label}</label>
+            <input
+              type=${field.key === 'apiKey' ? 'password' : 'text'}
+              value=${form[field.key] || ''}
+              onChange=${e => updateField(field.key, e.target.value)}
+              class=${inputClass}
+              placeholder=${field.placeholder}
+              autocomplete="off"
+            />
+          </div>
+        `)}
+      </div>
+
+      <!-- Enable AI toggle -->
+      <div class="flex items-center gap-3 pt-2 border-t border-slate-200">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked=${aiEnabled}
+            onChange=${e => handleToggleAI(e.target.checked)}
+            class="sr-only peer"
+          />
+          <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-navy-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-navy-600" />
+        </label>
+        <span class="text-sm font-medium text-slate-700">Enable AI Features</span>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        <${Button}
+          onClick=${handleTestConnection}
+          disabled=${!form.apiKey || testing}
+        >
+          ${testing ? 'Testing...' : 'Test Connection'}
+        <//>
+        <${Button}
+          onClick=${handleSave}
+          disabled=${!dirty || !form.apiKey}
+        >
+          Save Firebase Config
+        <//>
+        ${isConfigured && html`
+          <${Button}
+            variant="danger"
+            onClick=${() => setConfirmClear(true)}
+          >
+            Clear Firebase Config
+          <//>
+        `}
+      </div>
+
+      <!-- Test result feedback -->
+      ${testResult === 'success' && html`
+        <p class="text-sm text-green-600 font-medium">Connection test passed.</p>
+      `}
+      ${testResult === 'error' && html`
+        <p class="text-sm text-red-600 font-medium">Connection test failed. Check your config values.</p>
+      `}
+
+      <${ConfirmDialog}
+        isOpen=${confirmClear}
+        onCancel=${() => setConfirmClear(false)}
+        onConfirm=${handleClear}
+        title="Clear Firebase Config"
+        message="This will remove your Firebase configuration and disable AI features. You can re-enter it later."
+        confirmText="Clear Config"
+        danger=${true}
+      />
     </div>
   `;
 }

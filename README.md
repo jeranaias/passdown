@@ -59,6 +59,32 @@ Full-text search across all entries with category and tag filtering.
 - Load starter templates for common billet types
 - Print-friendly view for offline reference
 
+### AI Assistant (Optional — Phase 2)
+
+Passdown includes an optional AI assistant powered by Google's Gemini 2.5 Flash via Firebase AI Logic. **All core features work without AI** — the assistant is a progressive enhancement.
+
+**What the AI can do:**
+- **Q&A Chat** — Ask questions about your knowledge base in natural language. "Who do I contact about MOS reclassification?" → AI answers from your captured entries with citations.
+- **Tag Suggestions** — AI reads your entry content and suggests relevant tags
+- **Content Improvement** — AI reviews entries and suggests structural improvements
+- **Narrative Follow-ups** — After answering an interview prompt, AI generates deeper probing questions
+- **Verification Review** — AI identifies entries that may be outdated or too vague
+- **Completeness Assessment** — AI evaluates your knowledge base coverage and identifies gaps
+
+**Setup (free, ~5 minutes):**
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project
+2. In Google Cloud Console, enable the **Vertex AI API** for your project
+3. In Firebase Console → Project Settings → General → Your apps → Add a web app
+4. Copy the Firebase config values
+5. In Passdown → Settings → Firebase Configuration → paste your config values
+6. Click "Test Connection" to verify
+
+**Cost:** Free. Firebase AI Logic's Spark plan includes Gemini 2.5 Flash at no cost (rate-limited to 10 RPM / 250 RPD).
+
+**Privacy:** Your knowledge base content is sent to Google's Gemini API when you use AI features. Do not enable AI if your knowledge base contains CUI or sensitive data. The AI system prompt prohibits the model from speculating beyond your provided data.
+
+**NAVMC 5239.1 Compliance:** All AI outputs are labeled as advisory. The human user is responsible for verifying and acting on AI-generated content.
+
 ## Deployment Options
 
 | Method | Best For | How |
@@ -97,7 +123,8 @@ This tool is designed for **UNCLASSIFIED** use only.
 - Tailwind CSS
 - Vanilla JavaScript ES modules
 - localStorage for persistence
-- No server, no database, no external dependencies at runtime
+- Firebase AI Logic + Gemini 2.5 Flash (optional, for AI features)
+- No server, no database, no external dependencies at runtime (AI features require Firebase)
 
 ## License
 

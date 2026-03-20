@@ -3,6 +3,7 @@
 
 import { html } from '../core/config.js';
 import { CATEGORIES, VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
+import AIService from '../core/ai-service.js';
 import { useApp } from './app.js';
 import Store from '../core/store.js';
 import { Badge, Button, Modal, ConfirmDialog, EmptyState, showToast } from '../shared/ui.js';
@@ -162,6 +163,8 @@ export default function Verification() {
   const { entries, updateEntry, navigate, addToast } = useApp();
   const [selected, setSelected] = useState(new Set());
   const [flagTarget, setFlagTarget] = useState(null);
+  const [aiReviewResults, setAiReviewResults] = useState(null);
+  const [aiReviewLoading, setAiReviewLoading] = useState(false);
 
   const billet = useMemo(() => Store.getBillet(), []);
   const settings = useMemo(() => Store.getSettings(), []);
@@ -239,7 +242,7 @@ export default function Verification() {
   }, [updateEntry, addToast]);
 
   const handleEdit = useCallback((entry) => {
-    navigate('edit?id=' + entry.id);
+    navigate('capture?id=' + entry.id);
   }, [navigate]);
 
   if (entries.length === 0) {
@@ -263,25 +266,117 @@ export default function Verification() {
         ${IconEye({ size: 24 })} Verification
       </h1>
 
-      <!-- Summary Stats -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-green-800">${stats.current}</div>
-          <div class="text-xs text-green-600 font-medium">Current</div>
+      <!-- Summary Stats + AI Review Button -->
+      <div class="flex items-start gap-3 flex-wrap">
+        <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 min-w-0">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="text-2xl font-bold text-green-800">${stats.current}</div>
+            <div class="text-xs text-green-600 font-medium">Current</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="text-2xl font-bold text-amber-800">${stats.expiring}</div>
+            <div class="text-xs text-amber-600 font-medium">Expiring (<30d)</div>
+          </div>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="text-2xl font-bold text-red-800">${stats.stale}</div>
+            <div class="text-xs text-red-600 font-medium">Stale</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <div class="text-2xl font-bold text-slate-700">${stats.unverified}</div>
+            <div class="text-xs text-slate-500 font-medium">Unverified</div>
+          </div>
         </div>
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-amber-800">${stats.expiring}</div>
-          <div class="text-xs text-amber-600 font-medium">Expiring (<30d)</div>
-        </div>
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-red-800">${stats.stale}</div>
-          <div class="text-xs text-red-600 font-medium">Stale</div>
-        </div>
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
-          <div class="text-2xl font-bold text-slate-700">${stats.unverified}</div>
-          <div class="text-xs text-slate-500 font-medium">Unverified</div>
-        </div>
+        ${AIService.isAvailable() ? html`
+          <button
+            onClick=${async () => {
+              setAiReviewLoading(true);
+              setAiReviewResults(null);
+              try {
+                const results = await AIService.reviewVerification(entries);
+                setAiReviewResults(results);
+                if (!results || results.length === 0) {
+                  showToast('AI review complete -- no issues found.', 'success');
+                }
+              } catch (err) {
+                showToast('AI review failed: ' + (err.message || 'Unknown error'), 'error');
+              } finally {
+                setAiReviewLoading(false);
+              }
+            }}
+            disabled=${aiReviewLoading}
+            class="flex-shrink-0 px-4 py-2.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg text-sm font-medium
+                   hover:bg-purple-100 transition-colors flex items-center gap-2 disabled:opacity-50"
+            title="AI-powered review of entry quality"
+          >
+            ${aiReviewLoading ? html`
+              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ` : html`
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+            `}
+            AI Review
+          </button>
+        ` : html`
+          <span
+            class="flex-shrink-0 px-4 py-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-lg text-sm font-medium
+                   flex items-center gap-2 cursor-default"
+            title="Set up Firebase in Settings to enable AI"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
+            AI Review
+          </span>
+        `}
       </div>
+
+      <!-- AI Review Results -->
+      ${aiReviewResults && aiReviewResults.length > 0 && html`
+        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-purple-800 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+              </svg>
+              AI Review Found ${aiReviewResults.length} Issue${aiReviewResults.length !== 1 ? 's' : ''}
+            </h3>
+            <button
+              onClick=${() => setAiReviewResults(null)}
+              class="text-xs text-purple-600 hover:text-purple-800 font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+          <div class="divide-y divide-purple-200 bg-white/60 rounded-lg">
+            ${aiReviewResults.map((item, idx) => {
+              const matchedEntry = entries.find(e => e.id === item.entryId);
+              return html`
+                <div key=${idx} class="flex items-center justify-between p-3 text-sm">
+                  <div class="flex-1 min-w-0">
+                    <span class="font-medium text-purple-900">${matchedEntry ? matchedEntry.title : item.entryId}</span>
+                    <p class="text-xs text-purple-700 mt-0.5">${item.issue}</p>
+                  </div>
+                  ${matchedEntry && html`
+                    <button
+                      onClick=${() => navigate('capture?id=' + matchedEntry.id)}
+                      class="ml-3 px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 border border-purple-300 flex-shrink-0"
+                    >
+                      Go to Entry
+                    </button>
+                  `}
+                </div>
+              `;
+            })}
+          </div>
+        </div>
+      `}
 
       <!-- Pre-PCS Report -->
       ${prePCSEntries && prePCSEntries.length > 0 && html`

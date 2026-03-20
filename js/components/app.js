@@ -2,12 +2,14 @@ import { html } from '../core/config.js';
 import CONFIG, { CATEGORIES } from '../core/config.js';
 import Store from '../core/store.js';
 import { buildIndex } from '../core/search.js';
+import AIService from '../core/ai-service.js';
 import { ToastContainer, Toast } from '../shared/ui.js';
 import {
   IconSearch, IconFolder, IconUsers, IconCalendar, IconChat,
   IconCheck, IconStar, IconDownload, IconMenu, IconX,
   IconChevronDown, IconChevronRight, ICON_MAP,
 } from '../shared/icons.js';
+import AIChatSidebar from './ai-chat.js';
 
 const {
   useState, useEffect, useRef, useCallback, useMemo,
@@ -345,6 +347,7 @@ async function loadComponent(hash) {
     'export':               () => import('./export-import.js'),
     'settings':             () => import('./settings.js'),
     'print':                () => import('./print-view.js'),
+    'ai-chat':              () => import('./ai-chat.js'),
   };
 
   const loader = componentMap[hash];
@@ -415,6 +418,7 @@ export default function App() {
   const [toasts, setToasts]             = useState([]);
   const [activeHash, setActiveHash]     = useState(getHash());
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [aiChatOpen, setAiChatOpen]     = useState(false);
 
   const toastId = useRef(0);
 
@@ -427,6 +431,11 @@ export default function App() {
     setStartHereIds(data.startHere);
     setSettingsState(data.settings);
     setSearchIndex(buildIndex(data.entries));
+
+    // Initialize AI if Firebase config is available
+    if (data.settings.firebaseConfig && data.settings.firebaseConfig.apiKey) {
+      AIService.init(data.settings.firebaseConfig);
+    }
   }, []);
 
   // Hash routing
@@ -437,6 +446,33 @@ export default function App() {
     }
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  // Ctrl+K toggles AI chat sidebar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setAiChatOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Listen for open-ai-chat custom events from components (e.g., search panel)
+  useEffect(() => {
+    const handleOpenAIChat = (e) => {
+      setAiChatOpen(true);
+      // If a query is provided, dispatch it to the chat sidebar via another event
+      if (e.detail && e.detail.query) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('ai-chat-prefill', { detail: { query: e.detail.query } }));
+        }, 100);
+      }
+    };
+    window.addEventListener('open-ai-chat', handleOpenAIChat);
+    return () => window.removeEventListener('open-ai-chat', handleOpenAIChat);
   }, []);
 
   // Rebuild search index when entries change
@@ -592,6 +628,15 @@ export default function App() {
           </main>
         </div>
       </div>
+
+      <button
+        onClick=${() => setAiChatOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-navy-700 hover:bg-navy-600 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-40 no-print"
+        title="AI Assistant (Ctrl+K)"
+      >
+        ${IconChat({ size: 24 })}
+      </button>
+      <${AIChatSidebar} isOpen=${aiChatOpen} onClose=${() => setAiChatOpen(false)} />
 
       <${ToastContainer} toasts=${toasts} onDismiss=${dismissToast} />
       <${Toast} />

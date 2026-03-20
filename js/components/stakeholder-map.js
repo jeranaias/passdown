@@ -124,11 +124,11 @@ export default function StakeholderMap() {
   }, [filtered]);
 
   const handleEdit = useCallback((entry) => {
-    navigate('edit?id=' + entry.id + '&category=stakeholder');
+    navigate('capture?id=' + entry.id + '&category=stakeholder');
   }, [navigate]);
 
   const handleAdd = useCallback(() => {
-    navigate('new?category=stakeholder');
+    navigate('capture?category=stakeholder');
   }, [navigate]);
 
   if (stakeholders.length === 0) {

@@ -60,6 +60,7 @@ const DEFAULT_BILLET = Object.freeze({
 const DEFAULT_SETTINGS = Object.freeze({
   verifyIntervalDays: 90,
   firebaseConfig: null,
+  aiEnabled: false,
 });
 
 // ─── Config ─────────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@
 // Guided interview for tacit knowledge capture with Capture and Review modes.
 
 import { html } from '../core/config.js';
+import AIService from '../core/ai-service.js';
 import { useApp } from './app.js';
 import Store from '../core/store.js';
 import { Button, ProgressBar, showToast } from '../shared/ui.js';
@@ -64,6 +65,9 @@ function CaptureMode({ prompts, responses, onSaveResponse, onSkip }) {
     return firstUnanswered >= 0 ? firstUnanswered : 0;
   });
   const [response, setResponse] = useState('');
+  const [followUps, setFollowUps] = useState([]);
+  const [followUpAnswers, setFollowUpAnswers] = useState({});
+  const [loadingFollowUps, setLoadingFollowUps] = useState(false);
   const textareaRef = useRef(null);
 
   const currentPrompt = prompts[currentIndex];
@@ -75,6 +79,8 @@ function CaptureMode({ prompts, responses, onSaveResponse, onSkip }) {
     } else {
       setResponse('');
     }
+    setFollowUps([]);
+    setFollowUpAnswers({});
   }, [currentIndex]);
 
   useEffect(() => {
@@ -139,6 +145,80 @@ function CaptureMode({ prompts, responses, onSaveResponse, onSkip }) {
 
         ${existingResponse && existingResponse.skipped && html`
           <div class="text-xs text-amber-600 font-medium">Previously skipped. You can add a response now.</div>
+        `}
+
+        <!-- AI Follow-up Section -->
+        ${AIService.isAvailable() && existingResponse && existingResponse.response && existingResponse.response.trim() && !existingResponse.skipped && html`
+          <div class="border-t border-slate-100 pt-4 mt-4">
+            <${Button}
+              variant="secondary"
+              size="sm"
+              onClick=${async () => {
+                setLoadingFollowUps(true);
+                setFollowUps([]);
+                try {
+                  const questions = await AIService.generateFollowUps(currentPrompt.question, existingResponse.response);
+                  if (Array.isArray(questions) && questions.length > 0) {
+                    setFollowUps(questions);
+                  } else {
+                    showToast('No follow-up questions generated.', 'info');
+                  }
+                } catch (err) {
+                  showToast('Failed to get follow-ups: ' + (err.message || 'Unknown error'), 'error');
+                } finally {
+                  setLoadingFollowUps(false);
+                }
+              }}
+              disabled=${loadingFollowUps}
+            >
+              ${loadingFollowUps ? html`
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ` : html`
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                </svg>
+              `}
+              Get follow-up questions
+            <//>
+
+            ${followUps.length > 0 && html`
+              <div class="mt-3 space-y-3">
+                ${followUps.map((q, idx) => html`
+                  <div key=${idx} class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-purple-800 mb-2">${q}</p>
+                    <textarea
+                      value=${followUpAnswers[idx] || ''}
+                      onChange=${(e) => setFollowUpAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
+                      rows="3"
+                      placeholder="Your answer..."
+                      class="w-full px-3 py-2 text-sm border border-purple-200 rounded-md bg-white
+                             focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500
+                             placeholder-slate-400 resize-y"
+                    />
+                    ${followUpAnswers[idx] && followUpAnswers[idx].trim() && html`
+                      <${Button}
+                        variant="secondary"
+                        size="sm"
+                        className="mt-1"
+                        onClick=${() => {
+                          const combined = existingResponse.response + '\n\n---\nFollow-up: ' + q + '\n' + followUpAnswers[idx].trim();
+                          onSaveResponse(currentPrompt.id, combined);
+                          showToast('Follow-up answer appended', 'success');
+                          setFollowUpAnswers(prev => { const n = { ...prev }; delete n[idx]; return n; });
+                        }}
+                      >
+                        ${IconCheck({ size: 14 })} Append to Response
+                      <//>
+                    `}
+                  </div>
+                `)}
+              </div>
+            `}
+          </div>
         `}
       </div>
 

@@ -1,10 +1,11 @@
 import { html } from '../core/config.js';
 import CONFIG, { CATEGORIES, VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
+import AIService from '../core/ai-service.js';
 import { AppContext, navigate } from './app.js';
-import { Button, Badge, Card, ProgressBar } from '../shared/ui.js';
+import { Button, Badge, Card, ProgressBar, showToast } from '../shared/ui.js';
 import { ICON_MAP, IconWarning, IconCheck, IconClock, IconStar } from '../shared/icons.js';
 
-const { useContext, useMemo } = React;
+const { useContext, useMemo, useState, useCallback } = React;
 
 // --- Helpers ------------------------------------------------------------------
 
@@ -421,6 +422,156 @@ function QuickStats({ entries, narratives, startHereIds, settings }) {
   `;
 }
 
+// --- KnowledgeCompleteness (AI-powered) ---------------------------------------
+
+function KnowledgeCompleteness({ entries, narratives, billetTitle }) {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAssess = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await AIService.assessCompleteness(entries, narratives, billetTitle);
+      setResult(data);
+    } catch (err) {
+      showToast('Completeness assessment failed: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [entries, narratives, billetTitle]);
+
+  if (!AIService.isAvailable()) return null;
+
+  const gradeColors = {
+    A: 'bg-green-100 text-green-800 border-green-300',
+    B: 'bg-blue-100 text-blue-800 border-blue-300',
+    C: 'bg-amber-100 text-amber-800 border-amber-300',
+    D: 'bg-orange-100 text-orange-800 border-orange-300',
+    F: 'bg-red-100 text-red-800 border-red-300',
+  };
+
+  const gradeColor = result ? (gradeColors[result.grade] || gradeColors.C) : '';
+
+  return html`
+    <${Card} className="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-purple-500">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+          </svg>
+          Knowledge Completeness
+        </h3>
+        ${!result && html`
+          <${Button}
+            variant="secondary"
+            size="sm"
+            onClick=${handleAssess}
+            disabled=${loading}
+          >
+            ${loading ? html`
+              <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ` : ''}
+            Assess Completeness
+          <//>
+        `}
+        ${result && html`
+          <button
+            onClick=${() => setResult(null)}
+            class="text-xs text-slate-500 hover:text-slate-700 font-medium"
+          >
+            Refresh
+          </button>
+        `}
+      </div>
+
+      ${!result && !loading && html`
+        <p class="text-sm text-slate-400">Click "Assess Completeness" for an AI-powered evaluation of your knowledge base readiness.</p>
+      `}
+
+      ${loading && html`
+        <div class="flex items-center justify-center py-6 text-slate-400">
+          <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span class="text-sm">Analyzing knowledge base...</span>
+        </div>
+      `}
+
+      ${result && html`
+        <div class="space-y-4">
+          <!-- Grade + Score -->
+          <div class="flex items-center gap-4">
+            <div class=${'w-16 h-16 rounded-full border-2 flex items-center justify-center text-2xl font-bold ' + gradeColor}>
+              ${result.grade}
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-slate-800">${result.score}<span class="text-sm font-normal text-slate-500"> / 100</span></p>
+              <p class="text-xs text-slate-500">Overall readiness score</p>
+            </div>
+          </div>
+
+          <!-- Strengths -->
+          ${result.strengths && result.strengths.length > 0 && html`
+            <div>
+              <h4 class="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1.5">Strengths</h4>
+              <ul class="space-y-1">
+                ${result.strengths.map((s, i) => html`
+                  <li key=${i} class="flex items-start gap-2 text-sm text-slate-700">
+                    <span class="text-green-500 flex-shrink-0 mt-0.5">${IconCheck({ size: 14 })}</span>
+                    ${s}
+                  </li>
+                `)}
+              </ul>
+            </div>
+          `}
+
+          <!-- Gaps -->
+          ${result.gaps && result.gaps.length > 0 && html`
+            <div>
+              <h4 class="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1.5">Gaps</h4>
+              <ul class="space-y-1">
+                ${result.gaps.map((g, i) => html`
+                  <li key=${i} class="flex items-start gap-2 text-sm text-slate-700">
+                    <span class="text-red-500 flex-shrink-0 mt-0.5">${IconWarning({ size: 14 })}</span>
+                    ${g}
+                  </li>
+                `)}
+              </ul>
+            </div>
+          `}
+
+          <!-- Recommendations -->
+          ${result.recommendations && result.recommendations.length > 0 && html`
+            <div>
+              <h4 class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1.5">Recommendations</h4>
+              <ul class="space-y-1">
+                ${result.recommendations.map((r, i) => html`
+                  <li key=${i} class="flex items-start gap-2 text-sm text-slate-700">
+                    <span class="text-blue-500 flex-shrink-0 mt-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </span>
+                    ${r}
+                  </li>
+                `)}
+              </ul>
+            </div>
+          `}
+
+          <p class="text-xs text-slate-400 italic pt-2 border-t border-slate-100">AI assessment -- advisory only</p>
+        </div>
+      `}
+    <//>
+  `;
+}
+
 // --- QuickActions -------------------------------------------------------------
 
 function QuickActions() {
@@ -480,6 +631,13 @@ export default function Dashboard() {
         narratives=${narratives}
         startHereIds=${startHereIds}
         settings=${settings}
+      />
+
+      <!-- Knowledge Completeness (AI) -->
+      <${KnowledgeCompleteness}
+        entries=${entries}
+        narratives=${narratives}
+        billetTitle=${billet.title}
       />
 
       <!-- Category Completion -->

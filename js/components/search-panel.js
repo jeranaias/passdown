@@ -3,6 +3,7 @@
 
 import { html } from '../core/config.js';
 import { CATEGORIES, PRIORITIES } from '../core/config.js';
+import AIService from '../core/ai-service.js';
 import { useApp } from './app.js';
 import { buildIndex, search, highlightMatches, getVerificationStatus } from '../core/search.js';
 import { Badge, Button, EmptyState } from '../shared/ui.js';
@@ -212,7 +213,7 @@ export default function SearchPanel() {
 
   useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
 
-  const handleEdit = useCallback((entry) => { navigate('edit?id=' + entry.id); }, [navigate]);
+  const handleEdit = useCallback((entry) => { navigate('capture?id=' + entry.id); }, [navigate]);
 
   const suggestedSearches = ['training', 'SOP', 'inspection', 'budget', 'stakeholder'];
 
@@ -223,24 +224,52 @@ export default function SearchPanel() {
       </h1>
 
       <!-- Search Input -->
-      <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-          ${IconSearch({ size: 22 })}
+      <div class="flex gap-2 items-stretch">
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            ${IconSearch({ size: 22 })}
+          </div>
+          <input ref=${inputRef} type="text" value=${query}
+            onChange=${e => setQuery(e.target.value)}
+            placeholder="Search your knowledge base..."
+            class="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-300 rounded-xl text-base
+                   shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500
+                   placeholder-slate-400" />
+          ${query && html`
+            <button onClick=${() => setQuery('')}
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          `}
         </div>
-        <input ref=${inputRef} type="text" value=${query}
-          onChange=${e => setQuery(e.target.value)}
-          placeholder="Search your knowledge base..."
-          class="w-full pl-12 pr-10 py-3.5 bg-white border border-slate-300 rounded-xl text-base
-                 shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500
-                 placeholder-slate-400" />
-        ${query && html`
-          <button onClick=${() => setQuery('')}
-            class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        ${AIService.isAvailable() ? html`
+          <button
+            onClick=${() => window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: query || '' } }))}
+            class="px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-sm font-medium
+                   hover:bg-purple-100 transition-colors flex items-center gap-2 flex-shrink-0"
+            title="Ask the AI assistant"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
+            Ask AI
           </button>
+        ` : html`
+          <span
+            class="px-4 py-2 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl text-sm font-medium
+                   flex items-center gap-2 flex-shrink-0 cursor-default"
+            title="Set up Firebase in Settings to enable AI"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            Ask AI
+          </span>
         `}
       </div>
 
@@ -289,6 +318,14 @@ export default function SearchPanel() {
                     No entries match "${debouncedQuery || 'current filters'}"
                   </h3>
                   <p class="text-sm text-slate-500">Try different terms or adjust your filters.</p>
+                  ${AIService.isAvailable() && debouncedQuery && html`
+                    <button
+                      onClick=${() => window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: debouncedQuery } }))}
+                      class="mt-3 text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                    >
+                      Ask the AI assistant →
+                    </button>
+                  `}
                 </div>
               `;
             }
