@@ -168,7 +168,7 @@ function NavGroup({ icon, label, children, activeHash }) {
 
 // --- Sidebar ------------------------------------------------------------------
 
-function Sidebar({ activeHash, mobile = false, onClose }) {
+function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
   const handleNav = useCallback((hash) => {
     navigate(hash);
     if (mobile && onClose) onClose();
@@ -607,7 +607,7 @@ export default function App() {
 
         <!-- Desktop Sidebar -->
         <div class="hidden lg:flex flex-shrink-0">
-          <${Sidebar} activeHash=${activeHash} />
+          <${Sidebar} activeHash=${activeHash} showInstall=${showInstall} />
         </div>
 
         <!-- Mobile Sidebar Overlay -->
@@ -622,6 +622,7 @@ export default function App() {
                 activeHash=${activeHash}
                 mobile
                 onClose=${() => setSidebarOpen(false)}
+                showInstall=${showInstall}
               />
             </div>
           </div>

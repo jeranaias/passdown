@@ -52,7 +52,7 @@ function TrashIcon({ size = 16 }) {
 // ─── Provider Indicator ──────────────────────────────────────────────────────
 
 function ProviderIndicator() {
-  const ready = WebLLMService.isReady ? WebLLMService.isReady() : WebLLMService.isAvailable();
+  const ready = WebLLMService.isAvailable();
 
   if (!ready) return null;
 
@@ -137,7 +137,7 @@ function ProviderSwitcher() {
   );
 
   const firebaseAvailable = AIService.isAvailable();
-  const webllmAvailable = WebLLMService.isReady();
+  const webllmAvailable = WebLLMService.isAvailable();
 
   // Only show when both providers are available
   if (!firebaseAvailable || !webllmAvailable) return null;
@@ -510,13 +510,13 @@ export default function AIChatSidebar({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [pendingEntry, setPendingEntry] = useState(null);
   const [webllmLoading, setWebllmLoading] = useState(false);
-  const [webllmReady, setWebllmReady] = useState(() => WebLLMService.isReady());
+  const [webllmReady, setWebllmReady] = useState(() => WebLLMService.isAvailable());
   const messagesEndRef = useRef(null);
   const panelRef = useRef(null);
 
   // Listen for WebLLM readiness changes
   useEffect(() => {
-    const handler = () => setWebllmReady(WebLLMService.isReady());
+    const handler = () => setWebllmReady(WebLLMService.isAvailable());
     window.addEventListener('webllm-ready', handler);
     return () => window.removeEventListener('webllm-ready', handler);
   }, []);

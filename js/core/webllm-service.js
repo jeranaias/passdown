@@ -99,6 +99,10 @@ const WebLLMService = {
     return this.initialized && this.engine !== null;
   },
 
+  getModelId() {
+    return this.modelId || null;
+  },
+
   // ── Multi-Turn Chat ─────────────────────────────────────────────────────
 
   async chat(messages, systemPrompt) {

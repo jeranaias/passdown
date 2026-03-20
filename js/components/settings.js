@@ -162,7 +162,7 @@ function OfflineAIConfiguration() {
       const supported = WebLLMService.isSupported();
       setWebGPUSupported(supported);
       // Check if a model is already cached/loaded
-      if (supported && WebLLMService.isReady()) {
+      if (supported && WebLLMService.isAvailable()) {
         setModelReady(true);
         setModelLoaded(true);
       }
@@ -176,7 +176,7 @@ function OfflineAIConfiguration() {
     setSelectedModel(value);
     localStorage.setItem('passdown_webllm_model', value);
     // Reset ready state if model changed from what's loaded
-    if (WebLLMService.isReady() && WebLLMService.getModelId() !== value) {
+    if (WebLLMService.isAvailable() && WebLLMService.getModelId() !== value) {
       setModelReady(false);
       setModelLoaded(false);
     }
