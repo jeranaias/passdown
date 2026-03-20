@@ -3,9 +3,11 @@
 
 import { html } from '../core/config.js';
 import AIService from '../core/ai-service.js';
+import WebLLMService from '../core/webllm-service.js';
 import { useApp } from './app.js';
 import { MarkdownPreview } from '../shared/markdown.js';
 import { IconX } from '../shared/icons.js';
+import { ProgressBar } from '../shared/ui.js';
 
 const { useState, useEffect, useRef, useCallback } = React;
 
@@ -44,6 +46,130 @@ function TrashIcon({ size = 16 }) {
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     </svg>
+  `;
+}
+
+// ─── Provider Indicator ──────────────────────────────────────────────────────
+
+function ProviderIndicator() {
+  const ready = WebLLMService.isReady ? WebLLMService.isReady() : WebLLMService.isAvailable();
+
+  if (!ready) return null;
+
+  return html`
+    <span class="flex items-center gap-1 text-[10px] text-navy-300 mr-1">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-400" />
+      Local AI
+    </span>
+  `;
+}
+
+// ─── WebLLM Loading Screen ──────────────────────────────────────────────────
+
+function WebLLMLoadingScreen({ onCancel }) {
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState('Initializing...');
+
+  useEffect(() => {
+    const model = localStorage.getItem('passdown_webllm_model') || 'Phi-3.5-mini-instruct-q4f16_1-MLC';
+
+    let cancelled = false;
+    WebLLMService.load(model, (report) => {
+      if (cancelled) return;
+      if (report.progress !== undefined) {
+        setProgress(Math.round(report.progress * 100));
+      }
+      if (report.text) {
+        setProgressText(report.text);
+      }
+    }).then(() => {
+      if (!cancelled) {
+        // Trigger re-render of parent by dispatching a custom event
+        window.dispatchEvent(new CustomEvent('webllm-ready'));
+      }
+    }).catch((err) => {
+      if (!cancelled) {
+        console.error('[AIChatSidebar] WebLLM load failed:', err);
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  return html`
+    <div class="flex-1 flex items-center justify-center p-6">
+      <div class="text-center max-w-sm space-y-4">
+        <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 animate-pulse">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-slate-700">Downloading AI model...</h3>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-600">${progressText}</span>
+            <span class="text-slate-500 font-medium">${progress}%</span>
+          </div>
+          <${ProgressBar} value=${progress} color="bg-blue-500" />
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          This is a one-time download. The model will be cached for offline use.
+        </p>
+        <button
+          onClick=${onCancel}
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Provider Switcher (bottom of chat) ─────────────────────────────────────
+
+function ProviderSwitcher() {
+  const [provider, setProvider] = useState(
+    () => localStorage.getItem('passdown_ai_provider') || 'firebase'
+  );
+
+  const firebaseAvailable = AIService.isAvailable();
+  const webllmAvailable = WebLLMService.isReady();
+
+  // Only show when both providers are available
+  if (!firebaseAvailable || !webllmAvailable) return null;
+
+  const handleSwitch = (newProvider) => {
+    setProvider(newProvider);
+    localStorage.setItem('passdown_ai_provider', newProvider);
+    if (typeof AIService.setProvider === 'function') {
+      AIService.setProvider(newProvider);
+    }
+  };
+
+  return html`
+    <div class="flex items-center justify-center gap-1 px-3 py-1.5 border-t border-slate-100">
+      <span class="text-[10px] text-slate-400 mr-1">Provider:</span>
+      <button
+        onClick=${() => handleSwitch('firebase')}
+        class=${provider === 'firebase'
+          ? 'px-2 py-0.5 text-[10px] font-medium rounded bg-navy-700 text-white'
+          : 'px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-500 hover:bg-slate-200'}
+      >
+        Online
+      </button>
+      <button
+        onClick=${() => handleSwitch('webllm')}
+        class=${provider === 'webllm'
+          ? 'px-2 py-0.5 text-[10px] font-medium rounded bg-navy-700 text-white'
+          : 'px-2 py-0.5 text-[10px] font-medium rounded bg-slate-100 text-slate-500 hover:bg-slate-200'}
+      >
+        Offline
+      </button>
+    </div>
   `;
 }
 
@@ -106,9 +232,10 @@ function SetupInstructions() {
         <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
           <${SparkleIcon} size=${28} />
         </div>
-        <h3 class="text-base font-semibold text-slate-700">AI Assistant Not Configured</h3>
+        <h3 class="text-base font-semibold text-slate-700">AI Model Not Loaded</h3>
         <p class="text-sm text-slate-500 leading-relaxed">
-          Set up Firebase in Settings to enable AI-powered Q&A over your knowledge base.
+          Download an AI model in Settings to enable AI-powered Q&A.
+          Runs entirely on your device — no data leaves this machine.
           All other features work without AI.
         </p>
         <a href="#settings"
@@ -382,8 +509,17 @@ export default function AIChatSidebar({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pendingEntry, setPendingEntry] = useState(null);
+  const [webllmLoading, setWebllmLoading] = useState(false);
+  const [webllmReady, setWebllmReady] = useState(() => WebLLMService.isReady());
   const messagesEndRef = useRef(null);
   const panelRef = useRef(null);
+
+  // Listen for WebLLM readiness changes
+  useEffect(() => {
+    const handler = () => setWebllmReady(WebLLMService.isReady());
+    window.addEventListener('webllm-ready', handler);
+    return () => window.removeEventListener('webllm-ready', handler);
+  }, []);
 
   // Get current page from hash
   const getCurrentPage = useCallback(() => {
@@ -513,6 +649,7 @@ export default function AIChatSidebar({ isOpen, onClose }) {
           <h2 class="text-base font-semibold">Passdown AI</h2>
         </div>
         <div class="flex items-center gap-1">
+          <${ProviderIndicator} />
           ${messages.length > 0 && html`
             <button
               onClick=${handleClear}
@@ -535,15 +672,19 @@ export default function AIChatSidebar({ isOpen, onClose }) {
       </div>
 
       <!-- Body -->
-      ${!AIService.isSignedIn() && html`
-        <${SignInPrompt} onSignIn=${() => AIService.signIn()} />
+      ${webllmLoading && html`
+        <${WebLLMLoadingScreen} onCancel=${() => setWebllmLoading(false)} />
       `}
 
-      ${AIService.isSignedIn() && messages.length === 0 && !loading && html`
+      ${!webllmLoading && !webllmReady && html`
+        <${SetupInstructions} />
+      `}
+
+      ${!webllmLoading && webllmReady && messages.length === 0 && !loading && html`
         <${WelcomePrompt} onSuggestion=${handleSuggestion} currentPage=${currentPage} />
       `}
 
-      ${AIService.isSignedIn() && (messages.length > 0 || loading) && html`
+      ${!webllmLoading && webllmReady && (messages.length > 0 || loading) && html`
         <div class="flex-1 overflow-y-auto p-4">
           ${messages.map((msg, i) => html`
             <${MessageBubble} key=${i} message=${msg} />
@@ -568,8 +709,8 @@ export default function AIChatSidebar({ isOpen, onClose }) {
         />
       `}
 
-      <!-- Input (only when signed in) -->
-      ${AIService.isSignedIn() && html`
+      <!-- Input (when model is loaded) -->
+      ${webllmReady && !webllmLoading && html`
         <${ChatInput} onSend=${handleSend} disabled=${loading} />
       `}
     </div>

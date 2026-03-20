@@ -3,6 +3,7 @@ import CONFIG, { CATEGORIES } from '../core/config.js';
 import Store from '../core/store.js';
 import { buildIndex } from '../core/search.js';
 import AIService from '../core/ai-service.js';
+import WebLLMService from '../core/webllm-service.js';
 import { ToastContainer, Toast } from '../shared/ui.js';
 import {
   IconSearch, IconFolder, IconUsers, IconCalendar, IconChat,
@@ -454,8 +455,10 @@ export default function App() {
     setSettingsState(data.settings);
     setSearchIndex(buildIndex(data.entries));
 
-    // Auto-initialize AI with built-in Firebase config (or user's custom config)
-    AIService.autoInit().catch(err => console.warn('[App] AI auto-init:', err.message));
+    // Check WebGPU availability for offline AI
+    if (WebLLMService.isSupported()) {
+      console.log('[App] WebGPU available for offline AI');
+    }
   }, []);
 
   // Hash routing

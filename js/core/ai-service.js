@@ -1,52 +1,23 @@
 // ─── AI Service ──────────────────────────────────────────────────────────────
-// Firebase AI Logic abstraction layer for Passdown Phase 2.
-// Uses Gemini 2.5 Flash via Firebase AI (free tier, no API key management).
+// WebLLM-powered AI for Passdown. Runs entirely in the browser via WebGPU.
+// Zero cloud dependencies. No data leaves the machine. No API keys needed.
 
-import { CATEGORIES, FIREBASE_CONFIG } from './config.js';
-
-// Firebase SDK imports (CDN ES modules)
-let firebaseApp = null;
-let firebaseAI = null;
-let firebaseAuth = null;
-let currentUser = null;
-
-// ─── Rate Limiter ────────────────────────────────────────────────────────────
-
-const MIN_REQUEST_INTERVAL_MS = 2000;
-let lastRequestTimestamp = 0;
-
-async function enforceRateLimit() {
-  const now = Date.now();
-  const elapsed = now - lastRequestTimestamp;
-  if (elapsed < MIN_REQUEST_INTERVAL_MS) {
-    await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL_MS - elapsed));
-  }
-  lastRequestTimestamp = Date.now();
-}
+import { CATEGORIES } from './config.js';
+import WebLLMService from './webllm-service.js';
 
 // ─── JSON Parsing Helper ─────────────────────────────────────────────────────
 
 function parseJSONResponse(text) {
-  // Try direct parse
-  try {
-    return JSON.parse(text);
-  } catch (_) { /* fall through */ }
+  try { return JSON.parse(text); } catch (_) { /* fall through */ }
 
-  // Try extracting from markdown code fence
   const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
   if (fenceMatch) {
-    try {
-      return JSON.parse(fenceMatch[1].trim());
-    } catch (_) { /* fall through */ }
+    try { return JSON.parse(fenceMatch[1].trim()); } catch (_) { /* fall through */ }
   }
 
-  // Try finding first [ or { and parsing from there
   const bracketIdx = text.search(/[\[{]/);
   if (bracketIdx >= 0) {
-    const candidate = text.slice(bracketIdx);
-    try {
-      return JSON.parse(candidate);
-    } catch (_) { /* fall through */ }
+    try { return JSON.parse(text.slice(bracketIdx)); } catch (_) { /* fall through */ }
   }
 
   return null;
@@ -55,107 +26,19 @@ function parseJSONResponse(text) {
 // ─── AI Service Object ──────────────────────────────────────────────────────
 
 const AIService = {
-  initialized: false,
-  _model: null,
 
-  // ── Initialize Firebase + Gemini ──────────────────────────────────────────
-
-  async init(firebaseConfig) {
-    if (!firebaseConfig || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
-      this.initialized = false;
-      this._model = null;
-      return;
-    }
-
-    try {
-      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js');
-      const { getAI, getGenerativeModel, GoogleAIBackend } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-ai.js');
-      const { getAuth, signInWithPopup, onAuthStateChanged, GoogleAuthProvider } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
-
-      // Avoid re-initializing with same config
-      if (!firebaseApp) {
-        firebaseApp = initializeApp(firebaseConfig);
-      }
-
-      // Initialize auth
-      firebaseAuth = getAuth(firebaseApp);
-      this._authProvider = new GoogleAuthProvider();
-      this._signInWithPopup = signInWithPopup;
-
-      // Listen for auth state changes
-      onAuthStateChanged(firebaseAuth, (user) => {
-        currentUser = user;
-        this.user = user;
-      });
-
-      const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
-      this._model = getGenerativeModel(ai, {
-        model: 'gemini-2.5-flash',
-        generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
-      });
-
-      this.initialized = true;
-      console.log('[AIService] Initialized with Firebase project:', firebaseConfig.projectId);
-    } catch (err) {
-      console.error('[AIService] Initialization failed:', err);
-      this.initialized = false;
-      this._model = null;
-    }
-  },
-
-  // ── Availability Check ────────────────────────────────────────────────────
+  // ── Availability ──────────────────────────────────────────────────────────
 
   isAvailable() {
-    return this.initialized && this._model !== null;
+    return WebLLMService.isAvailable();
   },
 
-  // ── Auto-initialize with built-in Firebase config ───────────────────────
-  async autoInit() {
-    if (this.initialized) return;
-    // Use user's custom config if set, otherwise use built-in
-    const settings = (() => {
-      try {
-        const raw = localStorage.getItem('passdown_settings');
-        return raw ? JSON.parse(raw) : null;
-      } catch (_) { return null; }
-    })();
-    const config = (settings?.firebaseConfig?.apiKey) ? settings.firebaseConfig : FIREBASE_CONFIG;
-    await this.init(config);
+  isSupported() {
+    return WebLLMService.isSupported();
   },
 
-  isSignedIn() {
-    return !!currentUser;
-  },
-
-  getUser() {
-    return currentUser;
-  },
-
-  async signIn() {
-    if (!firebaseAuth || !this._authProvider) {
-      throw new Error('Firebase not initialized');
-    }
-    try {
-      const result = await this._signInWithPopup(firebaseAuth, this._authProvider);
-      currentUser = result.user;
-      this.user = result.user;
-      return result.user;
-    } catch (err) {
-      console.error('[AIService] Sign-in failed:', err);
-      throw err;
-    }
-  },
-
-  async signOut() {
-    if (!firebaseAuth) return;
-    try {
-      const { signOut: fbSignOut } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
-      await fbSignOut(firebaseAuth);
-      currentUser = null;
-      this.user = null;
-    } catch (err) {
-      console.error('[AIService] Sign-out failed:', err);
-    }
+  get webllm() {
+    return WebLLMService;
   },
 
   // ── Page Context Helper ──────────────────────────────────────────────────
@@ -226,7 +109,7 @@ Help them prioritize. The best Start Here list covers:
 Help them with exporting, importing, or loading templates. Remind them to export regularly as a backup. If they're about to share an export, remind them to review for OPSEC first.`,
 
       'settings': `The user is in SETTINGS.
-Help them configure their billet info, PCS dates, and Firebase AI settings. If they need help setting up Firebase, walk them through it step by step.`,
+Help them configure their billet info and PCS dates. If they need help with AI setup, explain that they just need to download a model — one-time, then it works offline forever.`,
     };
 
     return contexts[page] || `Help the user with whatever they need. You have access to their full knowledge base.`;
@@ -237,13 +120,11 @@ Help them configure their billet info, PCS dates, and Firebase AI settings. If t
   buildSystemPrompt(entries, billet, narratives, pageContext) {
     const billetTitle = billet?.title || 'this billet';
     const billetUnit = billet?.unit || 'this unit';
-
-    // Page-aware context block
     const pageHelp = this._getPageContext(pageContext, entries, billet, narratives);
 
-    let prompt = `You are Passdown AI, a secure knowledge transfer assistant for the ${billetTitle} billet at ${billetUnit}.
+    let prompt = `You are Passdown AI, a secure knowledge transfer assistant for the ${billetTitle} billet at ${billetUnit}. You run entirely on this device — no data leaves this machine.
 
-MISSION: Help the user capture, organize, verify, and retrieve institutional knowledge for billet turnover. You assist with ALL aspects of the application — not just Q&A.
+MISSION: Help the user capture, organize, verify, and retrieve institutional knowledge for billet turnover.
 
 CURRENT PAGE: ${pageContext || 'unknown'}
 ${pageHelp}
@@ -251,22 +132,17 @@ ${pageHelp}
 RULES:
 1. You have access to the full knowledge base below. Use it to answer questions, suggest content, and help the user fill out forms.
 2. When citing information, reference the entry title in brackets: [Entry Title]
-3. Use billet titles, never personal names. If the user tries to enter PII (names, SSNs, phone numbers tied to individuals), gently remind them to use billet titles instead.
-4. NEVER speculate about classified information, manning numbers, readiness data, or operational details. If the user tries to enter potentially classified or sensitive data, warn them immediately.
+3. Use billet titles, never personal names. If the user tries to enter PII, gently remind them to use billet titles instead.
+4. NEVER speculate about classified information, manning numbers, readiness data, or operational details. If the user enters potentially sensitive data, warn them: "OPSEC: This information may be sensitive. Consider whether it belongs in an unclassified system."
 5. Be concise and direct. Military-professional tone.
 6. If asked about something outside the knowledge base, suggest which category it should be captured in and offer to help draft the entry.
 7. All responses are advisory. The human is responsible for decisions.
-8. You can help the user with ANY page in the app: writing entries, improving content, suggesting stakeholders, reviewing verification status, preparing narrative answers, organizing the Start Here list, or understanding what to do next.
-9. Proactively suggest next steps based on what page the user is on and what gaps exist in the knowledge base.
-10. OPSEC GUARDIAN: If you detect the user is about to enter information that could be sensitive in aggregate (specific unit capabilities, deployment schedules, intelligence methods), flag it with a clear warning: "⚠ OPSEC: This information may be sensitive. Consider whether it belongs in an unclassified system."
-11. ENTRY CREATION: When the user asks you to write, draft, or create an entry, produce the entry as a JSON code block with this format. The user will see an "Add to Knowledge Base" button to approve it:
+8. Help with ANY page: writing entries, improving content, suggesting stakeholders, reviewing verification, preparing narrative answers, organizing Start Here, or suggesting next steps.
+9. ENTRY CREATION: When asked to write or draft an entry, produce it as a JSON code block:
 \`\`\`json
-{"category": "process|decision|stakeholder|calendar|lesson|issue", "title": "Entry Title", "content": "Markdown content here", "tags": ["tag1", "tag2"], "priority": "high|medium|low", "meta": {}}
+{"category": "process|decision|stakeholder|calendar|lesson|issue", "title": "Entry Title", "content": "Markdown content", "tags": ["tag1"], "priority": "high|medium|low", "meta": {}}
 \`\`\`
-For stakeholder entries, include meta: {"billetTitle": "...", "org": "...", "frequency": "daily|weekly|monthly|quarterly|asNeeded", "relationship": "..."}
-For calendar entries, include meta: {"recurrence": "annual|quarterly|monthly|weekly|oneTime", "month": 1-12, "prepLeadDays": 30}
-For decision entries, include meta: {"decisionDate": "YYYY-MM-DD", "alternatives": "...", "outcome": "...", "reversible": true|false}
-Always include the JSON block so the entry can be directly added. Add explanatory text OUTSIDE the code block.
+Add explanatory text OUTSIDE the code block.
 
 KNOWLEDGE BASE:
 `;
@@ -278,7 +154,6 @@ KNOWLEDGE BASE:
     }
 
     const sortedEntries = [...(entries || [])].sort((a, b) => {
-      // High priority first, then by updated date descending
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       const pa = priorityOrder[a.priority] ?? 1;
       const pb = priorityOrder[b.priority] ?? 1;
@@ -287,53 +162,35 @@ KNOWLEDGE BASE:
     });
 
     let charCount = prompt.length;
-    const MAX_CHARS = 100000;
+    const MAX_CHARS = 80000; // Smaller budget for local models
     let truncated = false;
 
     for (const entry of sortedEntries) {
       const catId = entry.category || 'process';
-      if (!categoryMap[catId]) {
-        categoryMap[catId] = { label: catId, entries: [] };
-      }
+      if (!categoryMap[catId]) categoryMap[catId] = { label: catId, entries: [] };
 
-      const entryText = `### ${entry.title}
-Category: ${categoryMap[catId]?.label || catId}
-Priority: ${entry.priority || 'medium'}
-Tags: ${(entry.tags || []).join(', ') || 'none'}
-Verified: ${entry.verified ? 'Yes' : 'No'}${entry.verifiedAt ? ' (' + entry.verifiedAt + ')' : ''}
-Content:
-${entry.content || '(no content)'}
-`;
-      if (charCount + entryText.length > MAX_CHARS) {
-        truncated = true;
-        break;
-      }
+      const entryText = `### ${entry.title}\nCategory: ${categoryMap[catId]?.label || catId}\nPriority: ${entry.priority || 'medium'}\nTags: ${(entry.tags || []).join(', ') || 'none'}\n${entry.content || '(no content)'}\n`;
 
+      if (charCount + entryText.length > MAX_CHARS) { truncated = true; break; }
       categoryMap[catId].entries.push(entryText);
       charCount += entryText.length;
     }
 
-    // Serialize grouped entries
     for (const catId of Object.keys(categoryMap)) {
       const cat = categoryMap[catId];
       if (cat.entries.length === 0) continue;
-      prompt += `\n## ${cat.label}\n`;
-      prompt += cat.entries.join('\n');
+      prompt += `\n## ${cat.label}\n` + cat.entries.join('\n');
     }
 
     if (truncated) {
-      prompt += `\n[NOTE: Knowledge base was truncated due to size. Some lower-priority and older entries are omitted. ${sortedEntries.length} total entries exist.]\n`;
+      prompt += `\n[NOTE: KB truncated. ${sortedEntries.length} total entries exist.]\n`;
     }
 
-    // Narratives
     if (narratives && narratives.length > 0) {
       prompt += '\nNARRATIVE RESPONSES:\n';
       for (const n of narratives) {
-        const nText = `Q: ${n.prompt || n.question || '(no question)'}\nA: ${n.response || '(no response)'}\n\n`;
-        if (charCount + nText.length > MAX_CHARS) {
-          prompt += '[Additional narratives omitted due to size.]\n';
-          break;
-        }
+        const nText = `Q: ${n.prompt || n.question || ''}\nA: ${n.response || ''}\n\n`;
+        if (charCount + nText.length > MAX_CHARS) break;
         prompt += nText;
         charCount += nText.length;
       }
@@ -346,318 +203,117 @@ ${entry.content || '(no content)'}
 
   async chat(messages, entries, billet, narratives, pageContext) {
     if (!this.isAvailable()) {
-      return 'AI is not configured. Set up Firebase in Settings to enable AI features.';
+      return 'AI model not loaded. Go to Settings → Offline AI to download a model.';
     }
-
     try {
-      await enforceRateLimit();
-
-      const systemInstruction = this.buildSystemPrompt(entries, billet, narratives, pageContext);
-
-      // Build history from all messages except the last user message
-      const history = [];
-      for (let i = 0; i < messages.length - 1; i++) {
-        const msg = messages[i];
-        history.push({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }],
-        });
-      }
-
-      const chatSession = this._model.startChat({
-        history,
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-      });
-
-      // Send the latest user message
-      const lastMessage = messages[messages.length - 1];
-      const result = await chatSession.sendMessage(lastMessage.content);
-      const response = result.response;
-      return response.text();
+      const systemPrompt = this.buildSystemPrompt(entries, billet, narratives, pageContext);
+      return await WebLLMService.chat(messages, systemPrompt);
     } catch (err) {
       console.error('[AIService] Chat error:', err);
-      if (err.message?.includes('quota') || err.message?.includes('429')) {
-        return 'Rate limit reached. Please wait a moment and try again.';
-      }
-      if (err.message?.includes('SAFETY')) {
-        return 'The response was blocked by safety filters. Try rephrasing your question.';
-      }
-      return 'AI encountered an error: ' + (err.message || 'Unknown error') + '. Please try again.';
+      return 'AI error: ' + (err.message || 'Unknown error');
+    }
+  },
+
+  // ── Helper: run a single prompt ──────────────────────────────────────────
+
+  async _generate(prompt) {
+    if (!this.isAvailable()) return null;
+    try {
+      return await WebLLMService.generate(prompt);
+    } catch (err) {
+      console.error('[AIService] Generate error:', err);
+      return null;
     }
   },
 
   // ── Suggest Tags ──────────────────────────────────────────────────────────
 
   async suggestTags(title, content) {
-    if (!this.isAvailable()) return [];
-
-    try {
-      await enforceRateLimit();
-
-      const truncatedContent = (content || '').slice(0, 500);
-      const prompt = `Suggest 3 to 5 short, relevant tags for this knowledge base entry. Return ONLY a JSON array of lowercase strings, no other text.
-
-Title: ${title || '(untitled)'}
-Content: ${truncatedContent}
-
-Example output: ["logistics", "supply-chain", "weekly-report"]`;
-
-      const result = await this._model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = parseJSONResponse(text);
-
-      if (Array.isArray(parsed) && parsed.every(t => typeof t === 'string')) {
-        return parsed.map(t => t.toLowerCase().trim()).filter(Boolean).slice(0, 5);
-      }
-
-      return [];
-    } catch (err) {
-      console.error('[AIService] suggestTags error:', err);
-      return [];
-    }
+    const prompt = `Suggest 3-5 short tags for this knowledge entry. Return ONLY a JSON array of lowercase strings.\n\nTitle: ${title || ''}\nContent: ${(content || '').slice(0, 500)}\n\nExample: ["logistics", "supply-chain", "weekly-report"]`;
+    const text = await this._generate(prompt);
+    if (!text) return [];
+    const parsed = parseJSONResponse(text);
+    return Array.isArray(parsed) ? parsed.filter(t => typeof t === 'string').map(t => t.toLowerCase().trim()).slice(0, 5) : [];
   },
 
   // ── Improve Content ───────────────────────────────────────────────────────
 
   async improveContent(entry) {
-    if (!this.isAvailable()) return 'AI is not available.';
-
-    try {
-      await enforceRateLimit();
-
-      const prompt = `Review this knowledge base entry and provide specific, actionable suggestions to improve its clarity, completeness, and usefulness for someone new to this billet. Be concise. Use bullet points.
-
-Title: ${entry.title || '(untitled)'}
-Category: ${entry.category || 'unknown'}
-Priority: ${entry.priority || 'medium'}
-Tags: ${(entry.tags || []).join(', ') || 'none'}
-Content:
-${entry.content || '(no content)'}
-
-Provide suggestions in plain text with bullet points. Focus on:
-- Missing information that should be added
-- Ambiguous language that could confuse a newcomer
-- Structure improvements (steps, timelines, POCs)
-- OPSEC concerns (PII, classified info)`;
-
-      const result = await this._model.generateContent(prompt);
-      return result.response.text();
-    } catch (err) {
-      console.error('[AIService] improveContent error:', err);
-      return 'Unable to generate suggestions: ' + (err.message || 'Unknown error');
-    }
+    const prompt = `Review this knowledge entry and suggest improvements. Use bullet points.\n\nTitle: ${entry.title || ''}\nCategory: ${entry.category || ''}\nContent:\n${entry.content || '(empty)'}\n\nFocus on: missing info, vague language, structure, OPSEC concerns.`;
+    return (await this._generate(prompt)) || 'Unable to generate suggestions.';
   },
 
   // ── Generate Follow-Up Questions ──────────────────────────────────────────
 
   async generateFollowUps(promptText, response) {
-    if (!this.isAvailable()) return [];
-
-    try {
-      await enforceRateLimit();
-
-      const prompt = `Based on this interview exchange, suggest 2-3 follow-up probing questions that would extract more useful knowledge for a billet turnover. Return ONLY a JSON array of question strings.
-
-Interview prompt: ${promptText}
-Response: ${response}
-
-Example output: ["What happens if the deadline is missed?", "Who is the backup POC for this process?"]`;
-
-      const result = await this._model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = parseJSONResponse(text);
-
-      if (Array.isArray(parsed) && parsed.every(q => typeof q === 'string')) {
-        return parsed.slice(0, 3);
-      }
-
-      return [];
-    } catch (err) {
-      console.error('[AIService] generateFollowUps error:', err);
-      return [];
-    }
+    const prompt = `Based on this interview exchange, suggest 2-3 follow-up questions. Return ONLY a JSON array of strings.\n\nPrompt: ${promptText}\nResponse: ${response}\n\nExample: ["What happens if the deadline is missed?", "Who is the backup?"]`;
+    const text = await this._generate(prompt);
+    if (!text) return [];
+    const parsed = parseJSONResponse(text);
+    return Array.isArray(parsed) ? parsed.filter(q => typeof q === 'string').slice(0, 3) : [];
   },
 
   // ── Analyze Gaps ──────────────────────────────────────────────────────────
 
   async analyzeGaps(entries, billetTitle) {
-    if (!this.isAvailable()) return [];
-
-    try {
-      await enforceRateLimit();
-
-      const entryList = (entries || []).map(e =>
-        `- [${e.category || 'unknown'}] ${e.title}`
-      ).join('\n');
-
-      const categoryList = CATEGORIES.map(c => `${c.id}: ${c.label}`).join(', ');
-
-      const prompt = `Analyze this knowledge base for a "${billetTitle || 'military billet'}" turnover and identify what's missing. Return ONLY a JSON array of objects.
-
-Available categories: ${categoryList}
-
-Current entries:
-${entryList || '(no entries yet)'}
-
-Identify 3-7 gaps. Each object must have:
-- "title": suggested entry title (string)
-- "category": one of the category IDs listed above (string)
-- "reason": brief explanation of why this is needed (string)
-
-Example: [{"title": "Weekly Battle Rhythm", "category": "calendar", "reason": "No recurring schedule captured for key weekly events"}]`;
-
-      const result = await this._model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = parseJSONResponse(text);
-
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter(g => g && typeof g.title === 'string' && typeof g.category === 'string' && typeof g.reason === 'string')
-          .slice(0, 7);
-      }
-
-      return [];
-    } catch (err) {
-      console.error('[AIService] analyzeGaps error:', err);
-      return [];
-    }
+    const entryList = (entries || []).map(e => `- [${e.category}] ${e.title}`).join('\n');
+    const prompt = `Analyze this knowledge base for a "${billetTitle || 'billet'}" turnover. Identify 3-7 missing topics. Return ONLY a JSON array.\n\nCategories: ${CATEGORIES.map(c => c.id).join(', ')}\n\nCurrent entries:\n${entryList || '(none)'}\n\nEach object: {"title": "...", "category": "...", "reason": "..."}`;
+    const text = await this._generate(prompt);
+    if (!text) return [];
+    const parsed = parseJSONResponse(text);
+    return Array.isArray(parsed) ? parsed.filter(g => g?.title && g?.category && g?.reason).slice(0, 7) : [];
   },
 
   // ── Generate from Description ────────────────────────────────────────────
 
   async generateFromDescription(description, category) {
-    if (!this.isAvailable()) return '';
-
-    try {
-      await enforceRateLimit();
-
-      const prompt = `Given the following brief description for a "${category || 'process'}" knowledge base entry, generate well-structured Markdown content. Include relevant headings, bullet points, and [PLACEHOLDER] markers where the user should fill in specifics. Return ONLY the Markdown content, no wrapping.
-
-Brief description:
-${description}`;
-
-      const result = await this._model.generateContent(prompt);
-      return result.response.text();
-    } catch (err) {
-      console.error('[AIService] generateFromDescription error:', err);
-      return '';
-    }
+    const prompt = `Generate well-structured Markdown content for a "${category || 'process'}" knowledge entry. Include headings and [PLACEHOLDER] markers. Return ONLY the Markdown.\n\nDescription: ${description}`;
+    return (await this._generate(prompt)) || '';
   },
 
   // ── Review Verification ───────────────────────────────────────────────────
 
   async reviewVerification(entries) {
-    if (!this.isAvailable()) return [];
-
-    try {
-      await enforceRateLimit();
-
-      const entryList = (entries || []).map(e =>
-        `- ID: ${e.id} | Title: ${e.title} | Updated: ${e.updatedAt || e.createdAt || 'unknown'} | Verified: ${e.verified ? 'Yes' : 'No'} | Content preview: ${(e.content || '').slice(0, 150)}`
-      ).join('\n');
-
-      const prompt = `Review these knowledge base entries and identify which ones might be outdated, vague, or need reverification. Return ONLY a JSON array of objects.
-
-Entries:
-${entryList || '(no entries)'}
-
-Each object must have:
-- "entryId": the entry ID (string)
-- "issue": brief description of the concern (string)
-
-Focus on: vague/generic content, entries that reference time-sensitive info, entries without verification, and entries that seem incomplete. Return up to 10 items.`;
-
-      const result = await this._model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = parseJSONResponse(text);
-
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter(r => r && typeof r.entryId === 'string' && typeof r.issue === 'string')
-          .slice(0, 10);
-      }
-
-      return [];
-    } catch (err) {
-      console.error('[AIService] reviewVerification error:', err);
-      return [];
-    }
+    const entryList = (entries || []).map(e =>
+      `- ID: ${e.id} | ${e.title} | Updated: ${e.updatedAt || 'unknown'} | Preview: ${(e.content || '').slice(0, 100)}`
+    ).join('\n');
+    const prompt = `Review these entries and identify which may be outdated or vague. Return ONLY a JSON array.\n\nEntries:\n${entryList}\n\nEach object: {"entryId": "...", "issue": "..."}. Return up to 10.`;
+    const text = await this._generate(prompt);
+    if (!text) return [];
+    const parsed = parseJSONResponse(text);
+    return Array.isArray(parsed) ? parsed.filter(r => r?.entryId && r?.issue).slice(0, 10) : [];
   },
 
   // ── Assess Completeness ───────────────────────────────────────────────────
 
   async assessCompleteness(entries, narratives, billetTitle) {
-    if (!this.isAvailable()) {
-      return { grade: 'N/A', score: 0, strengths: [], gaps: [], recommendations: [] };
+    const fallback = { grade: 'N/A', score: 0, strengths: [], gaps: [], recommendations: [] };
+    const categoryCounts = {};
+    for (const cat of CATEGORIES) categoryCounts[cat.id] = 0;
+    for (const e of (entries || [])) categoryCounts[e.category || 'process'] = (categoryCounts[e.category || 'process'] || 0) + 1;
+
+    const prompt = `Evaluate this knowledge base for a "${billetTitle || 'billet'}" turnover. Return ONLY a JSON object.
+
+Stats: ${(entries||[]).length} entries, ${(narratives||[]).length} narratives
+Per category: ${JSON.stringify(categoryCounts)}
+
+Return: {"grade": "A-F", "score": 0-100, "strengths": ["..."], "gaps": ["..."], "recommendations": ["..."]}
+
+Rubric: A(90+): comprehensive. B(75-89): good with minor gaps. C(60-74): moderate. D(40-59): minimal. F(<40): barely started.`;
+
+    const text = await this._generate(prompt);
+    if (!text) return fallback;
+    const parsed = parseJSONResponse(text);
+    if (parsed?.grade && typeof parsed.score === 'number') {
+      return {
+        grade: parsed.grade,
+        score: Math.min(100, Math.max(0, parsed.score)),
+        strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+        gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
+        recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+      };
     }
-
-    try {
-      await enforceRateLimit();
-
-      const categoryList = CATEGORIES.map(c => `${c.id}: ${c.label}`).join(', ');
-
-      const categoryCounts = {};
-      for (const cat of CATEGORIES) {
-        categoryCounts[cat.id] = 0;
-      }
-      for (const e of (entries || [])) {
-        const catId = e.category || 'process';
-        categoryCounts[catId] = (categoryCounts[catId] || 0) + 1;
-      }
-
-      const verifiedCount = (entries || []).filter(e => e.verified).length;
-      const totalEntries = (entries || []).length;
-      const totalNarratives = (narratives || []).length;
-
-      const prompt = `Evaluate the completeness of this knowledge base for a "${billetTitle || 'military billet'}" turnover. Return ONLY a JSON object.
-
-Available categories: ${categoryList}
-
-Statistics:
-- Total entries: ${totalEntries}
-- Verified entries: ${verifiedCount}
-- Narrative responses: ${totalNarratives}
-- Entries per category: ${JSON.stringify(categoryCounts)}
-
-Entry titles by category:
-${Object.entries(categoryCounts).map(([catId, count]) => {
-  const titles = (entries || []).filter(e => e.category === catId).map(e => e.title).join(', ');
-  return `  ${catId} (${count}): ${titles || '(empty)'}`;
-}).join('\n')}
-
-Return a JSON object with:
-- "grade": letter grade A through F (string)
-- "score": numeric score 0-100 (number)
-- "strengths": array of 2-4 strengths (string[])
-- "gaps": array of 2-5 identified gaps (string[])
-- "recommendations": array of 2-4 prioritized next steps (string[])
-
-Grading rubric:
-A (90-100): All categories populated, most entries verified, narratives captured, comprehensive coverage
-B (75-89): Good coverage with minor gaps, some unverified entries
-C (60-74): Moderate coverage, several categories thin or empty
-D (40-59): Minimal coverage, many categories empty
-F (0-39): Barely started`;
-
-      const result = await this._model.generateContent(prompt);
-      const text = result.response.text();
-      const parsed = parseJSONResponse(text);
-
-      if (parsed && typeof parsed.grade === 'string' && typeof parsed.score === 'number') {
-        return {
-          grade: parsed.grade,
-          score: Math.min(100, Math.max(0, parsed.score)),
-          strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
-          gaps: Array.isArray(parsed.gaps) ? parsed.gaps : [],
-          recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
-        };
-      }
-
-      return { grade: 'N/A', score: 0, strengths: [], gaps: ['Unable to parse AI response'], recommendations: ['Try again'] };
-    } catch (err) {
-      console.error('[AIService] assessCompleteness error:', err);
-      return { grade: 'N/A', score: 0, strengths: [], gaps: [err.message || 'Unknown error'], recommendations: [] };
-    }
+    return fallback;
   },
 };
 

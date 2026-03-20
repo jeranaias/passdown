@@ -6,10 +6,11 @@ import CONFIG, { VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
 import { useApp } from './app.js';
 import Store from '../core/store.js';
 import AIService from '../core/ai-service.js';
-import { Button, ConfirmDialog, showToast } from '../shared/ui.js';
+import WebLLMService from '../core/webllm-service.js';
+import { Button, Select, ConfirmDialog, ProgressBar, showToast } from '../shared/ui.js';
 import { IconWarning } from '../shared/icons.js';
 
-const { useState, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo } = React;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,191 @@ function Preferences() {
       <div class="flex justify-end pt-2">
         <${Button} onClick=${handleSave} disabled=${!dirty}>Save Preferences<//>
       </div>
+    </div>
+  `;
+}
+
+// ─── Offline AI (WebLLM) ──────────────────────────────────────────────────────
+
+const WEBLLM_MODELS = [
+  { value: 'Phi-3.5-mini-instruct-q4f16_1-MLC',    label: 'Phi 3.5 Mini (recommended)', size: '~2.2 GB' },
+  { value: 'SmolLM2-1.7B-Instruct-q4f16_1-MLC',    label: 'SmolLM2 1.7B',               size: '~1.0 GB' },
+  { value: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',    label: 'Qwen 2.5 1.5B',              size: '~1.0 GB' },
+  { value: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',     label: 'Llama 3.2 3B',               size: '~1.8 GB' },
+];
+
+function OfflineAIConfiguration() {
+  const [webGPUSupported, setWebGPUSupported] = useState(null); // null = checking
+  const [selectedModel, setSelectedModel] = useState(
+    () => localStorage.getItem('passdown_webllm_model') || WEBLLM_MODELS[0].value
+  );
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressText, setProgressText] = useState('');
+  const [modelReady, setModelReady] = useState(false);
+  const [modelLoaded, setModelLoaded] = useState(false);
+  const [provider, setProvider] = useState(
+    () => localStorage.getItem('passdown_ai_provider') || 'firebase'
+  );
+
+  // Check WebGPU support on mount
+  useEffect(() => {
+    const check = async () => {
+      const supported = WebLLMService.isSupported();
+      setWebGPUSupported(supported);
+      // Check if a model is already cached/loaded
+      if (supported && WebLLMService.isReady()) {
+        setModelReady(true);
+        setModelLoaded(true);
+      }
+    };
+    check();
+  }, []);
+
+  const modelInfo = WEBLLM_MODELS.find(m => m.value === selectedModel) || WEBLLM_MODELS[0];
+
+  const handleModelChange = useCallback((value) => {
+    setSelectedModel(value);
+    localStorage.setItem('passdown_webllm_model', value);
+    // Reset ready state if model changed from what's loaded
+    if (WebLLMService.isReady() && WebLLMService.getModelId() !== value) {
+      setModelReady(false);
+      setModelLoaded(false);
+    }
+  }, []);
+
+  const handleDownload = useCallback(async () => {
+    setDownloading(true);
+    setProgress(0);
+    setProgressText('Initializing...');
+    try {
+      await WebLLMService.load(selectedModel, (report) => {
+        if (report.progress !== undefined) {
+          setProgress(Math.round(report.progress * 100));
+        }
+        if (report.text) {
+          setProgressText(report.text);
+        }
+      });
+      setModelReady(true);
+      setModelLoaded(true);
+      showToast('Offline AI model ready', 'success');
+    } catch (err) {
+      console.error('[OfflineAI] Download failed:', err);
+      showToast('Model download failed: ' + err.message, 'error');
+    } finally {
+      setDownloading(false);
+    }
+  }, [selectedModel]);
+
+  const handleUnload = useCallback(() => {
+    WebLLMService.unload();
+    setModelReady(false);
+    setModelLoaded(false);
+    showToast('Model unloaded — GPU memory freed', 'info');
+  }, []);
+
+  const handleProviderChange = useCallback((newProvider) => {
+    setProvider(newProvider);
+    localStorage.setItem('passdown_ai_provider', newProvider);
+    if (typeof AIService.setProvider === 'function') {
+      AIService.setProvider(newProvider);
+    }
+    showToast('AI provider set to ' + (newProvider === 'webllm' ? 'Offline (WebLLM)' : 'Online (Firebase)'), 'info');
+  }, []);
+
+  return html`
+    <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-navy-900">Offline AI (WebLLM)</h2>
+        <span class=${
+          webGPUSupported === null
+            ? 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-slate-50 text-slate-500 border border-slate-200'
+            : webGPUSupported
+              ? 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700 border border-green-200'
+              : 'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-red-50 text-red-700 border border-red-200'
+        }>
+          <span class=${
+            webGPUSupported === null ? 'w-2 h-2 rounded-full bg-slate-400'
+              : webGPUSupported ? 'w-2 h-2 rounded-full bg-green-500'
+              : 'w-2 h-2 rounded-full bg-red-500'
+          } />
+          ${webGPUSupported === null ? 'Checking...'
+            : webGPUSupported ? 'WebGPU supported'
+            : 'WebGPU not supported'}
+        </span>
+      </div>
+
+      <p class="text-sm text-slate-600 leading-relaxed">
+        Run AI entirely in your browser — no internet needed, no data leaves your machine.
+      </p>
+
+      ${!webGPUSupported && webGPUSupported !== null && html`
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p class="text-sm text-amber-800 font-medium mb-1">WebGPU Not Available</p>
+          <p class="text-xs text-amber-700 leading-relaxed">
+            Offline AI requires WebGPU, available in Chrome 113+, Edge 113+, or other Chromium browsers.
+            Offline AI requires a WebGPU-capable browser to run.
+          </p>
+        </div>
+      `}
+
+      ${webGPUSupported && html`
+        <!-- Model Selection -->
+        <div class="space-y-3">
+          <${Select}
+            label="Model"
+            value=${selectedModel}
+            onChange=${handleModelChange}
+            options=${WEBLLM_MODELS.map(m => ({ value: m.value, label: m.label }))}
+            disabled=${downloading}
+          />
+          <p class="text-xs text-slate-500">
+            ${modelInfo.size} download, cached after first use.
+          </p>
+        </div>
+
+        <!-- Download / Status -->
+        ${downloading && html`
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-700 font-medium">Downloading model...</span>
+              <span class="text-slate-500">${progress}%</span>
+            </div>
+            <${ProgressBar} value=${progress} color="bg-blue-500" />
+            <p class="text-xs text-slate-500">${progressText}</p>
+          </div>
+        `}
+
+        ${modelReady && !downloading && html`
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
+            <p class="text-sm text-green-800 font-medium">Model ready — works offline!</p>
+          </div>
+        `}
+
+        <div class="flex flex-wrap items-center gap-3">
+          ${!modelReady && !downloading && html`
+            <${Button} onClick=${handleDownload}>
+              Download & Enable
+            <//>
+          `}
+          ${modelReady && !downloading && !modelLoaded && html`
+            <${Button} onClick=${handleDownload}>
+              Load Model
+            <//>
+          `}
+          ${modelLoaded && html`
+            <${Button} variant="secondary" onClick=${handleUnload}>
+              Unload Model
+            <//>
+          `}
+        </div>
+
+        <p class="text-xs text-slate-500 pt-2 border-t border-slate-200">
+          All AI runs locally on your device. No data is transmitted to any server.
+        </p>
+      `}
     </div>
   `;
 }
@@ -399,7 +585,7 @@ export default function Settings() {
       </h1>
       <${BilletSetup} />
       <${Preferences} />
-      <${AIConfiguration} />
+      <${OfflineAIConfiguration} />
       <${DataManagement} />
       <${About} />
     </div>
