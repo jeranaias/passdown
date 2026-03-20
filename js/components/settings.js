@@ -273,6 +273,9 @@ function OfflineAIConfiguration() {
           <p class="text-xs text-slate-500">
             ${modelInfo.size} download, cached after first use.
           </p>
+          <p class="text-xs text-slate-400 mt-1">
+            Phi 3.5 Mini recommended for best AI quality. SmolLM2 for faster loading on slower connections.
+          </p>
         </div>
 
         <!-- Download / Status -->

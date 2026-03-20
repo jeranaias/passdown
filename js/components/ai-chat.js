@@ -558,15 +558,45 @@ export default function AIChatSidebar({ isOpen, onClose }) {
 
     try {
       const pageContext = getCurrentPage();
-      const responseText = await AIService.chat(updatedMessages, entries, billet, narratives, pageContext);
+      let responseText;
+
+      // Use streaming when WebLLM is the active provider
+      if (WebLLMService.isAvailable()) {
+        const systemPrompt = AIService.buildSystemPrompt(entries, billet, narratives, pageContext);
+
+        // Add empty assistant message immediately for streaming updates
+        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+        setLoading(false); // hide loading dots — live text replaces them
+
+        responseText = await WebLLMService.chatStream(
+          updatedMessages,
+          systemPrompt,
+          (partialText) => {
+            setMessages(prev => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { role: 'assistant', content: partialText };
+              return updated;
+            });
+          }
+        );
+
+        // Final update with complete text (ensures consistency)
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'assistant', content: responseText };
+          return updated;
+        });
+      } else {
+        // Fallback: non-streaming via AIService
+        responseText = await AIService.chat(updatedMessages, entries, billet, narratives, pageContext);
+        setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+      }
 
       // Check if the AI is proposing an entry to create (looks for a JSON block with category+title+content)
       const entryProposal = parseEntryProposal(responseText);
       if (entryProposal) {
         setPendingEntry(entryProposal);
       }
-
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
     } catch (err) {
       console.error('[AIChatSidebar] Error:', err);
       setMessages(prev => [...prev, {

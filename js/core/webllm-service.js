@@ -131,11 +131,6 @@ const WebLLMService = {
         });
       }
 
-      // Trim system prompt for small models (keep under ~2000 chars)
-      if (chatMessages[0]?.role === 'system' && chatMessages[0].content.length > 3000) {
-        chatMessages[0].content = chatMessages[0].content.substring(0, 3000) + '\n\n[Knowledge base truncated for model capacity. Answer based on what is shown above.]';
-      }
-
       const response = await this.engine.chat.completions.create({
         messages: chatMessages,
         temperature: 0.4,
@@ -149,6 +144,55 @@ const WebLLMService = {
     } catch (err) {
       console.error('[WebLLM] Chat error:', err);
       throw new Error('WebLLM chat failed: ' + (err.message || 'Unknown error'));
+    }
+  },
+
+  // ── Streaming Multi-Turn Chat ───────────────────────────────────────────
+
+  async chatStream(messages, systemPrompt, onChunk) {
+    if (!this.isAvailable()) {
+      throw new Error('WebLLM engine is not initialized. Call init() first.');
+    }
+
+    try {
+      const chatMessages = [];
+
+      // System prompt
+      if (systemPrompt) {
+        chatMessages.push({ role: 'system', content: systemPrompt });
+      }
+
+      // Conversation history
+      for (const msg of messages) {
+        chatMessages.push({
+          role: msg.role === 'model' ? 'assistant' : msg.role,
+          content: msg.content,
+        });
+      }
+
+      const stream = await this.engine.chat.completions.create({
+        messages: chatMessages,
+        temperature: 0.4,
+        max_tokens: 1024,
+        frequency_penalty: 1.2,
+        presence_penalty: 0.6,
+        stream: true,
+      });
+
+      let fullText = '';
+      for await (const chunk of stream) {
+        const delta = chunk.choices?.[0]?.delta?.content || '';
+        if (delta) {
+          fullText += delta;
+          if (typeof onChunk === 'function') {
+            onChunk(fullText);
+          }
+        }
+      }
+      return fullText;
+    } catch (err) {
+      console.error('[WebLLM] Stream chat error:', err);
+      throw new Error('WebLLM streaming chat failed: ' + (err.message || 'Unknown error'));
     }
   },
 

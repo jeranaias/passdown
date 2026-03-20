@@ -115,11 +115,48 @@ Help them configure their billet info and PCS dates. If they need help with AI s
     return contexts[page] || `Help the user with whatever they need. You have access to their full knowledge base.`;
   },
 
+  // ── Model Size Detection ──────────────────────────────────────────────────
+
+  _getModelSize() {
+    const modelId = WebLLMService.getModelId() || '';
+    if (/SmolLM2|1\.7B|1\.5B|360M|135M/i.test(modelId)) return 'small';
+    if (/3B|3\.8B|Phi-3|Llama-3\.2-3B/i.test(modelId)) return 'medium';
+    return 'large';
+  },
+
   // ── System Prompt Builder ─────────────────────────────────────────────────
 
   buildSystemPrompt(entries, billet, narratives, pageContext) {
+    const modelSize = this._getModelSize();
     const billetTitle = billet?.title || 'this billet';
     const billetUnit = billet?.unit || 'this unit';
+
+    // ── Small models: drastically simplified prompt ───────────────────────
+    if (modelSize === 'small') {
+      const MAX_CHARS = 2000;
+      let prompt = `You are Passdown AI for the ${billetTitle} billet at ${billetUnit}. Answer questions about the knowledge base below.
+Rules: No PII (use billet titles, not names). Cite entry titles in [brackets]. Be concise.
+
+Entries:\n`;
+
+      let charCount = prompt.length;
+      const sorted = [...(entries || [])].sort((a, b) => {
+        const po = { high: 0, medium: 1, low: 2 };
+        return (po[a.priority] ?? 1) - (po[b.priority] ?? 1);
+      });
+
+      for (const entry of sorted) {
+        const line = `- ${entry.title} (${entry.category || 'process'})\n`;
+        if (charCount + line.length > MAX_CHARS) break;
+        prompt += line;
+        charCount += line.length;
+      }
+
+      return prompt;
+    }
+
+    // ── Medium and large models: full prompt ─────────────────────────────
+    const MAX_CHARS = modelSize === 'medium' ? 6000 : 20000;
     const pageHelp = this._getPageContext(pageContext, entries, billet, narratives);
 
     let prompt = `You are Passdown AI, a secure knowledge transfer assistant for the ${billetTitle} billet at ${billetUnit}. You run entirely on this device — no data leaves this machine.
@@ -162,7 +199,6 @@ KNOWLEDGE BASE:
     });
 
     let charCount = prompt.length;
-    const MAX_CHARS = 6000; // Conservative budget for small local models (1.7B-3.8B)
     let truncated = false;
 
     for (const entry of sortedEntries) {
