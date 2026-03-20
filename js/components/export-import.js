@@ -5,8 +5,9 @@ import { html } from '../core/config.js';
 import CONFIG, { CATEGORIES } from '../core/config.js';
 import { useApp } from './app.js';
 import Store from '../core/store.js';
+import OLFExport from '../core/olf-export.js';
 import { Button, Modal, ConfirmDialog, showToast } from '../shared/ui.js';
-import { IconDownload, IconPrinter } from '../shared/icons.js';
+import { IconDownload, IconPrinter, IconExternalLink } from '../shared/icons.js';
 
 const { useState, useCallback, useMemo, useEffect, useRef } = React;
 
@@ -97,12 +98,24 @@ function ExportSection() {
     window.location.hash = '#print';
   }, []);
 
+  const handleExportOLF = useCallback(() => {
+    try {
+      OLFExport.download();
+      showToast('OLF export downloaded', 'success');
+    } catch (err) {
+      showToast('OLF export failed: ' + err.message, 'error');
+    }
+  }, []);
+
   return html`
     <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
       <h2 class="text-lg font-semibold text-navy-900">Export</h2>
       <div class="flex flex-wrap gap-3">
         <${Button} onClick=${handleExportJSON}>${IconDownload({ size: 16 })} Export Knowledge Base<//>
         <${Button} variant="secondary" onClick=${handleExportPrint}>${IconPrinter({ size: 16 })} Export for Print<//>
+        <${Button} variant="secondary" onClick=${handleExportOLF}
+          title="Export in Operational Language Framework format for enterprise registry integration."
+        >${IconExternalLink({ size: 16 })} Export OLF Format<//>
       </div>
       <div class="flex flex-wrap gap-6 text-xs text-slate-500">
         ${lastExport && html`<span>Last export: ${formatDate(lastExport)}</span>`}

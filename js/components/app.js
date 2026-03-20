@@ -96,6 +96,34 @@ function CaptureIcon(props) {
   `;
 }
 
+function FederationIcon(props) {
+  const { size = 18, className = '' } = props || {};
+  return html`
+    <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      class=${className}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  `;
+}
+
+function BarChartIcon(props) {
+  const { size = 18, className = '' } = props || {};
+  return html`
+    <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      class=${className}>
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  `;
+}
+
 function ShieldLogo(props) {
   const { size = 20 } = props || {};
   return html`
@@ -288,6 +316,22 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           />
 
           <${NavItem}
+            icon=${FederationIcon()}
+            label="Federation"
+            hash="federation"
+            active=${activeHash === 'federation'}
+            onClick=${() => handleNav('federation')}
+          />
+
+          <${NavItem}
+            icon=${BarChartIcon()}
+            label="Readiness Report"
+            hash="analytics"
+            active=${activeHash === 'analytics'}
+            onClick=${() => handleNav('analytics')}
+          />
+
+          <${NavItem}
             icon=${SettingsIcon()}
             label="Settings"
             hash="settings"
@@ -355,6 +399,8 @@ async function loadComponent(hash) {
     'verify':               () => import('./verification.js'),
     'start-here':           () => import('./start-here.js'),
     'export':               () => import('./export-import.js'),
+    'federation':           () => import('./federation.js'),
+    'analytics':            () => import('./analytics.js'),
     'settings':             () => import('./settings.js'),
     'print':                () => import('./print-view.js'),
     'ai-chat':              () => import('./ai-chat.js'),

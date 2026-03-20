@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "framework": "Operational Language Framework (OLF)",
+  "alignment": "NAVMC 3000.1 (AI2P)",
+  "mapping": {
+    "billet": {
+      "olf_dimension": "billet",
+      "description": "Role definition — maps to OLF billet/MOS persona schema",
+      "passdown_fields": ["billet.title", "billet.unit", "billet.mission"]
+    },
+    "process": {
+      "olf_dimension": "output_template",
+      "description": "Standardized operational products and procedures",
+      "passdown_category": "process"
+    },
+    "decision": {
+      "olf_dimension": "mission_context",
+      "description": "Operational rationale and institutional judgment",
+      "passdown_category": "decision"
+    },
+    "stakeholder": {
+      "olf_dimension": "audience",
+      "description": "Target consumers and coordination points",
+      "passdown_category": "stakeholder"
+    },
+    "calendar": {
+      "olf_dimension": "operational_rhythm",
+      "description": "Mission-driven temporal patterns and deadlines",
+      "passdown_category": "calendar"
+    },
+    "lesson": {
+      "olf_dimension": "institutional_knowledge",
+      "description": "Tacit knowledge and organizational wisdom",
+      "passdown_category": "lesson"
+    },
+    "issue": {
+      "olf_dimension": "operational_continuity",
+      "description": "Active items requiring handover attention",
+      "passdown_category": "issue"
+    }
+  },
+  "compliance": {
+    "navmc_5239_1": "All AI outputs labeled advisory. Human responsible for decisions.",
+    "ai2p_navmc_3000_1": "Aligned with Goal 2 (Competent Workforce) and Goal 4 (Governance).",
+    "dod_rai_principles": ["Responsible", "Equitable", "Traceable", "Reliable", "Governable"],
+    "opsec": "Billet titles only. No PII. No classified data. Aggregation review required before distribution."
+  }
+}
