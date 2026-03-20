@@ -4,8 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Passdown — Zero-cost knowledge transfer system for USMC billet turnover">
-<meta name="theme-color" content="#1e3a5f">
+<meta name="theme-color" content="#102a43">
 <title>Passdown — Knowledge Transfer System</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="assets/icon-192.svg">
+<link rel="apple-touch-icon" href="assets/icon-192.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <!-- Print Styles -->
 <link rel="stylesheet" href="css/print.css" />
@@ -149,6 +156,36 @@ const { default: App } = await import('./js/components/app.js');
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(html`<${App} />`);
+
+// ─── Service Worker Registration ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+    .catch(err => console.warn('[PWA] SW registration failed:', err));
+}
+
+// ─── PWA Install Prompt ──────────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install button in sidebar (app.js listens for this)
+  window.dispatchEvent(new CustomEvent('pwa-install-available'));
+});
+
+window.installPWA = async function() {
+  if (!deferredInstallPrompt) {
+    alert('Use your browser menu to install this app.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  if (choice.outcome === 'accepted') {
+    console.log('[PWA] App installed');
+  }
+  deferredInstallPrompt = null;
+  window.dispatchEvent(new CustomEvent('pwa-installed'));
+};
 </script>
 
 </body>

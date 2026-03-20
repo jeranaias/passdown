@@ -296,8 +296,17 @@ function Sidebar({ activeHash, mobile = false, onClose }) {
         </div>
       </nav>
 
-      <!-- Footer -->
-      <div class="px-4 py-3 border-t border-navy-700/50">
+      <!-- Install / Footer -->
+      <div class="px-4 py-3 border-t border-navy-700/50 space-y-2">
+        ${showInstall && html`
+          <button
+            onClick=${() => window.installPWA && window.installPWA()}
+            class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Install for Offline
+          </button>
+        `}
         <p class="text-[10px] text-navy-500 text-center">
           v${CONFIG.VERSION} -- All data stored locally
         </p>
@@ -419,8 +428,21 @@ export default function App() {
   const [activeHash, setActiveHash]     = useState(getHash());
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [aiChatOpen, setAiChatOpen]     = useState(false);
+  const [showInstall, setShowInstall]   = useState(false);
 
   const toastId = useRef(0);
+
+  // Listen for PWA install availability
+  useEffect(() => {
+    const onAvailable = () => setShowInstall(true);
+    const onInstalled = () => setShowInstall(false);
+    window.addEventListener('pwa-install-available', onAvailable);
+    window.addEventListener('pwa-installed', onInstalled);
+    return () => {
+      window.removeEventListener('pwa-install-available', onAvailable);
+      window.removeEventListener('pwa-installed', onInstalled);
+    };
+  }, []);
 
   // Hydrate from Store on mount
   useEffect(() => {

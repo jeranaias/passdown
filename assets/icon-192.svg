@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="32" fill="#102a43"/>
+  <g transform="translate(96,96)">
+    <!-- Shield -->
+    <path d="M0-58 C30-58 50-40 50-10 C50 30 25 55 0 65 C-25 55 -50 30 -50-10 C-50-40 -30-58 0-58Z" fill="none" stroke="#d9e2ec" stroke-width="4"/>
+    <!-- Checkmark -->
+    <path d="M-20 5 L-5 20 L25-15" fill="none" stroke="#27AB83" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Arrow (passdown) -->
+    <path d="M0 30 L0 55 M-12 43 L0 55 L12 43" fill="none" stroke="#d9e2ec" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
