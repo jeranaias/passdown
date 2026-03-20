@@ -3,7 +3,7 @@
  * Enables offline functionality — cache local assets, network-first for CDN/AI
  */
 
-const CACHE_NAME = 'passdown-v1';
+const CACHE_NAME = 'passdown-v2';
 
 // Local assets to pre-cache on install
 const LOCAL_ASSETS = [
