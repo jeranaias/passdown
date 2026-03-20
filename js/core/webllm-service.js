@@ -56,7 +56,7 @@ const WebLLMService = {
     this.progress = { text: 'Importing WebLLM library...', progress: 0 };
 
     try {
-      const webllm = await import('https://esm.sh/@mlc-ai/web-llm@0.2.74');
+      const webllm = await import('https://esm.sh/@mlc-ai/web-llm');
 
       this.progress = { text: 'Initializing model engine...', progress: 0 };
 
