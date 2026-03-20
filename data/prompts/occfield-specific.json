@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "title": "OccField Manager Supplement",
+  "description": "Additional questions specific to occupational field management at HQMC",
+  "prompts": [
+    {
+      "id": "mos-health",
+      "category": "domain",
+      "question": "What are the key health indicators for your occupational field, and which ones are you most concerned about?",
+      "guidance": "Think about inventory levels, retention trends, accession pipeline, skill gaps, and any MOSs within the field that are critically short or overmanned."
+    },
+    {
+      "id": "monitor-relationship",
+      "category": "relationships",
+      "question": "How does the relationship with the monitor work, and what does the next person need to know about that dynamic?",
+      "guidance": "Describe the coordination rhythm, common friction points, and how to get things done effectively."
+    },
+    {
+      "id": "to-management",
+      "category": "processes",
+      "question": "Walk through how T/O changes and billet management actually work in practice.",
+      "guidance": "Include the formal process AND the informal realities. What are the timelines, who has approval authority, and what are the common pitfalls?"
+    },
+    {
+      "id": "school-seats",
+      "category": "processes",
+      "question": "How does school seat allocation and training pipeline coordination work for your field?",
+      "guidance": "Include TECOM coordination, course scheduling, quota management, and any recurring issues with throughput."
+    },
+    {
+      "id": "career-path",
+      "category": "domain",
+      "question": "What career path concerns exist within this occupational field that you've been working on?",
+      "guidance": "Think about promotion opportunities, lateral move patterns, career-enhancing billets, and any structural issues affecting Marines in this field."
+    }
+  ]
+}

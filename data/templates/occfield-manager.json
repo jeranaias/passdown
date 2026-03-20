@@ -1,0 +1,201 @@
+{
+  "version": "1.0.0",
+  "title": "OccField Manager — HQMC",
+  "description": "Starter template for an Occupational Field Manager billet at Headquarters Marine Corps. Replace placeholder text with your specifics.",
+  "entries": [
+    {
+      "id": "proc-mos-manual",
+      "category": "process",
+      "title": "MOS Manual Change Process",
+      "content": "Describe the end-to-end process for submitting changes to the MOS Manual (MCO 1200.17). Include who initiates changes, the staffing route through M&RA, TECOM coordination requirements, typical timelines from draft to publication, and common reasons submissions get kicked back. Note any informal pre-coordination steps that smooth the process.",
+      "tags": ["mos-manual", "policy", "staffing"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "proc-annual-mos-review",
+      "category": "process",
+      "title": "Annual MOS Review Cycle",
+      "content": "Describe the annual MOS review cycle: when it kicks off, what data you pull, which stakeholders provide input, and what the deliverables are. Include the timeline from data call to final report submission. Note which MOSs within your field typically require the most attention and why.",
+      "tags": ["annual-review", "mos-health", "reporting"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "proc-manning-requests",
+      "category": "process",
+      "title": "Manning Request and Billet Change Procedures",
+      "content": "Describe how commands request manning changes or billet additions/deletions for your occupational field. Include the formal T/O change request process, who has approval authority at each level, realistic timelines, and any workarounds or escalation paths when requests get stalled. Note common mistakes that delay requests.",
+      "tags": ["manning", "t-o", "billet-management"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "proc-conference-planning",
+      "category": "process",
+      "title": "OccField Specialist Symposium / Conference Planning",
+      "content": "Describe how the annual or biennial occupational field symposium is planned and executed. Include the planning timeline (when to start, key milestones), venue coordination, funding sources, agenda development process, VIP coordination, and after-action requirements. Note what worked well and what to change next time.",
+      "tags": ["conference", "symposium", "planning"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "proc-tecom-coordination",
+      "category": "process",
+      "title": "TECOM School Seat and Curriculum Coordination",
+      "content": "Describe the coordination process with TECOM for school seats, curriculum reviews, and training pipeline issues within your occupational field. Include the regular meeting rhythm, key POCs by billet, how quota adjustments are negotiated, and what to do when throughput problems arise.",
+      "tags": ["tecom", "training", "school-seats", "pipeline"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "dec-mos-restructure",
+      "category": "decision",
+      "title": "[Placeholder] MOS Restructure or Merge Decision",
+      "content": "Describe the decision, what alternatives were considered, why this path was chosen, and what the consequences of reversal would be. Example: 'Recommended merging MOS XXXX into XXXX because... The alternative was... If this is reversed, the impact would be...'",
+      "tags": ["mos", "restructure", "decision-log"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "dec-training-pipeline",
+      "category": "decision",
+      "title": "[Placeholder] Training Pipeline Adjustment Decision",
+      "content": "Describe a significant training pipeline decision you made or influenced. What data drove the decision? Who was consulted? What are the downstream effects on inventory and readiness? What should trigger a review of this decision?",
+      "tags": ["training", "pipeline", "decision-log"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "stake-monitor",
+      "category": "stakeholder",
+      "title": "M&RA Monitor for OccField",
+      "content": "Describe the working relationship with the monitor at MMEA/MMOA who handles assignments for your occupational field. Include the coordination rhythm (weekly calls, ad-hoc, etc.), common friction points (assignment mismatches, priority fills, etc.), how to escalate effectively, and what the monitor needs from you to do their job well.",
+      "tags": ["monitor", "m-and-ra", "assignments", "key-relationship"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-tecom-poc",
+      "category": "stakeholder",
+      "title": "TECOM Training POC",
+      "content": "Describe the relationship with the TECOM point of contact responsible for your field's formal schools. Include their role, how often you coordinate, what issues typically arise, and what they need from the OccField manager. Note any formal agreements or MOUs that govern the relationship.",
+      "tags": ["tecom", "training", "key-relationship"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-sister-service",
+      "category": "stakeholder",
+      "title": "Sister Service Liaison(s)",
+      "content": "Describe any sister service coordination required for your occupational field. Include which service counterparts you work with, what the coordination covers (joint billets, shared training, interoperability), how often you meet, and any agreements or working groups that formalize the relationship.",
+      "tags": ["joint", "sister-service", "interoperability"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "stake-division-leadership",
+      "category": "stakeholder",
+      "title": "Division / Branch Leadership",
+      "content": "Describe the reporting relationship with your division or branch head. Include what they expect from you (briefing frequency, reporting format, escalation criteria), their priorities for your occupational field, and any standing guidance that shapes how you do business.",
+      "tags": ["leadership", "reporting", "chain-of-command"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "cal-annual-review",
+      "category": "calendar",
+      "title": "Annual MOS Review Cycle",
+      "content": "Describe when the annual MOS review cycle kicks off and its key milestones. Example: 'Data call goes out in [month], inputs due by [month], analysis complete by [month], briefing to [authority] in [month].'",
+      "tags": ["annual", "mos-review", "deadline"],
+      "priority": "high",
+      "recurrence": "yearly",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "cal-pom-submission",
+      "category": "calendar",
+      "title": "POM Submission Cycle",
+      "content": "Describe your occupational field's role in the POM (Program Objective Memorandum) cycle. Include when inputs are due, what format they take, who reviews and approves, and how your field's manpower and training requirements feed into the larger POM submission.",
+      "tags": ["pom", "budget", "programming", "deadline"],
+      "priority": "high",
+      "recurrence": "yearly",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "cal-symposium",
+      "category": "calendar",
+      "title": "OccField Specialist Symposium",
+      "content": "Describe when the symposium or specialist conference is held, the planning lead time required, and key milestones. Example: 'Held every [frequency] in [month]. Start planning [X months] out. Venue reservation due by [month]. Invitations by [month].'",
+      "tags": ["symposium", "conference", "annual"],
+      "priority": "medium",
+      "recurrence": "yearly",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "cal-quarterly-reports",
+      "category": "calendar",
+      "title": "Quarterly Reporting Requirements",
+      "content": "Describe what quarterly reports or briefings are required. Include the audience, format, data sources, and deadlines. Note which reports are formal requirements vs. which are informal but expected.",
+      "tags": ["quarterly", "reporting", "briefings"],
+      "priority": "medium",
+      "recurrence": "quarterly",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "lesson-data-sources",
+      "category": "lesson",
+      "title": "Know Your Data Sources Cold",
+      "content": "Describe the key data systems and reports used to assess occupational field health. Example: 'TFDW is the authoritative source for inventory but has a [X]-day lag. MCTFS is better for real-time snapshots but...' Include which data sources are reliable, which require cross-referencing, and common pitfalls in data interpretation.",
+      "tags": ["data", "systems", "gotcha"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "lesson-stakeholder-management",
+      "category": "lesson",
+      "title": "Stakeholder Management Is the Job",
+      "content": "Describe the most important relationship management lessons you learned. Which stakeholders require proactive communication vs. which prefer to be left alone? What happens when coordination breaks down? What is the single most important relationship to maintain and why?",
+      "tags": ["relationships", "communication", "leadership"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "lesson-common-mistakes",
+      "category": "lesson",
+      "title": "Common Mistakes New OccField Managers Make",
+      "content": "Describe the 3-5 most common mistakes a new OccField manager makes. Examples: trying to change too much too fast, not building relationships with monitors before asking for things, misreading inventory data, underestimating the staffing timeline for MOS Manual changes.",
+      "tags": ["onboarding", "mistakes", "advice"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "issue-placeholder",
+      "category": "issue",
+      "title": "[Placeholder] Active Issue — Describe Current Issue",
+      "content": "Describe an active issue that requires continuity. Include: (1) Background — what caused this issue, (2) Current status — where things stand today, (3) Key stakeholders — who is involved and their positions, (4) Next steps — what needs to happen and by when, (5) Risk if dropped — what happens if the incoming person doesn't pick this up.",
+      "tags": ["active", "continuity"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 30
+    }
+  ]
+}

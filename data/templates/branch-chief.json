@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "title": "Branch Chief — HQMC Staff",
+  "description": "Starter template for a branch chief billet at a Headquarters-level staff organization. Replace placeholder text with your specifics.",
+  "entries": [
+    {
+      "id": "proc-branch-rhythm",
+      "category": "process",
+      "title": "Branch Operations Rhythm",
+      "content": "Describe the daily and weekly rhythm of branch operations. Include standing meetings (day, time, attendees, purpose), daily reporting requirements, how taskers flow through the branch, and how you track completion. Note the difference between the formal schedule and how things actually work.",
+      "tags": ["operations", "daily-rhythm", "meetings"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "proc-dirops-reporting",
+      "category": "process",
+      "title": "DirOps / Division Reporting Requirements",
+      "content": "Describe what the Director of Operations or Division Head expects from your branch. Include recurring reports (format, frequency, deadline), briefing expectations, and how to handle urgent taskers that come down. Note the preferred communication method and escalation criteria.",
+      "tags": ["dirops", "reporting", "chain-of-command"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "proc-staff-coordination",
+      "category": "process",
+      "title": "Cross-Branch and Inter-Staff Coordination",
+      "content": "Describe how coordination with sister branches and other staff sections works in practice. Include formal coordination processes (staffing packages, routing sheets), informal coordination norms, and which organizations require early coordination to avoid delays. Note any standing working groups or IPTs your branch participates in.",
+      "tags": ["coordination", "staffing", "cross-functional"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "proc-budget-oversight",
+      "category": "process",
+      "title": "Branch Budget and Resource Management",
+      "content": "Describe the branch's budget responsibilities. Include funding sources, spending authority limits, the annual budget cycle timeline, how to request additional funds, and common budget pitfalls. Note any recurring unfunded requirements and how you've addressed them in the past.",
+      "tags": ["budget", "resources", "fiscal"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "stake-dirops",
+      "category": "stakeholder",
+      "title": "Director of Operations / Division Head",
+      "content": "Describe the working relationship with the DirOps or Division Head. Include their leadership style, what they prioritize, how they prefer to receive information (brief, detailed memo, email, in-person), their tolerance for bad news, and any standing guidance that shapes branch operations.",
+      "tags": ["leadership", "dirops", "key-relationship"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-branch-staff",
+      "category": "stakeholder",
+      "title": "Branch Staff — Key Billets and Capabilities",
+      "content": "Describe your branch staff by billet (not name). Include each person's role, strengths, development areas, and current workload balance. Note any critical single points of failure — billets where only one person has the expertise. Include how you've organized work distribution and why.",
+      "tags": ["branch-staff", "personnel", "organization"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-sister-branches",
+      "category": "stakeholder",
+      "title": "Sister Branch Chiefs and Key External POCs",
+      "content": "Describe the relationships with other branch chiefs in your division and key external contacts. Include who you coordinate with most frequently, the nature of the coordination (shared equities, competing priorities, joint deliverables), and any relationship dynamics the next branch chief should understand.",
+      "tags": ["peers", "sister-branches", "coordination"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "cal-budget-cycle",
+      "category": "calendar",
+      "title": "Budget Cycle Key Dates",
+      "content": "Describe the annual budget milestones relevant to your branch. Example: 'POM inputs due [month], budget execution review [month], end-of-year spend plan due [month], unfunded requirements submission [month].' Include any fiscal year close-out activities.",
+      "tags": ["budget", "fiscal", "annual", "deadline"],
+      "priority": "high",
+      "recurrence": "yearly",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "cal-reporting-deadlines",
+      "category": "calendar",
+      "title": "Recurring Reporting and Briefing Deadlines",
+      "content": "Describe all recurring reporting deadlines. Include weekly reports, monthly metrics, quarterly reviews, and annual assessments. For each, note the audience, format, data sources, and who in the branch is responsible for production.",
+      "tags": ["reporting", "deadlines", "recurring"],
+      "priority": "high",
+      "recurrence": "monthly",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "cal-staff-meetings",
+      "category": "calendar",
+      "title": "Standing Meetings and Working Groups",
+      "content": "List all standing meetings and working groups the branch chief attends or sends a representative to. Include day/time, location, purpose, what to bring, and whether attendance is mandatory or optional. Note which meetings are actually valuable vs. which are attendance-only.",
+      "tags": ["meetings", "working-groups", "recurring"],
+      "priority": "medium",
+      "recurrence": "weekly",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "lesson-branch-leadership",
+      "category": "lesson",
+      "title": "Leadership Lessons for Running the Branch",
+      "content": "Describe what you learned about leading this branch effectively. Include how you managed competing priorities, how you kept the team motivated, how you handled underperformance, and what leadership approach worked best with this particular group. Note any team dynamics or morale issues the incoming chief should be aware of.",
+      "tags": ["leadership", "team", "management"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "issue-placeholder",
+      "category": "issue",
+      "title": "[Placeholder] Active Issue — Describe Current Issue",
+      "content": "Describe an active issue that requires continuity. Include: (1) Background — what caused this issue, (2) Current status — where things stand today, (3) Key stakeholders — who is involved and their positions, (4) Next steps — what needs to happen and by when, (5) Risk if dropped — what happens if the incoming person doesn't pick this up.",
+      "tags": ["active", "continuity"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 30
+    }
+  ]
+}

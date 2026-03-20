@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Passdown — Zero-cost knowledge transfer system for USMC billet turnover">
+<meta name="theme-color" content="#1e3a5f">
+<title>Passdown — Knowledge Transfer System</title>
+
+<!-- Print Styles -->
+<link rel="stylesheet" href="css/print.css" />
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy: {
+          50:  '#f0f4f8',
+          100: '#d9e2ec',
+          200: '#bcccdc',
+          300: '#9fb3c8',
+          400: '#829ab1',
+          500: '#627d98',
+          600: '#486581',
+          700: '#334e68',
+          800: '#243b53',
+          900: '#102a43',
+          950: '#0a1929',
+        },
+        olive: {
+          50:  '#f4f7f0',
+          100: '#e2ead6',
+          200: '#c5d5ad',
+          300: '#a8c084',
+          400: '#8bab5b',
+          500: '#6e9632',
+          600: '#587828',
+          700: '#425a1e',
+          800: '#2c3c14',
+          900: '#161e0a',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+    },
+  },
+}
+</script>
+
+<!-- React 18 via UMD -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+
+<style>
+  /* Print styles */
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: white !important; }
+    .print-break { page-break-before: always; }
+  }
+  .print-only { display: none; }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+  /* Transitions */
+  .fade-enter { opacity: 0; transform: translateY(-4px); }
+  .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 200ms ease, transform 200ms ease; }
+  .fade-exit { opacity: 1; }
+  .fade-exit-active { opacity: 0; transition: opacity 150ms ease; }
+
+  /* Slide panel */
+  .slide-in { animation: slideIn 200ms ease-out forwards; }
+  .slide-out { animation: slideOut 150ms ease-in forwards; }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
+
+  /* Modal backdrop */
+  .modal-backdrop { animation: fadeIn 150ms ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Toast animation */
+  .toast-enter { animation: toastIn 200ms ease-out forwards; }
+  .toast-exit { animation: toastOut 150ms ease-in forwards; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+
+  /* Markdown content styling */
+  .markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1rem; }
+  .markdown-body h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; margin-top: 0.75rem; }
+  .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; margin-top: 0.5rem; }
+  .markdown-body p { margin-bottom: 0.5rem; line-height: 1.6; }
+  .markdown-body ul, .markdown-body ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
+  .markdown-body ul { list-style-type: disc; }
+  .markdown-body ol { list-style-type: decimal; }
+  .markdown-body li { margin-bottom: 0.25rem; line-height: 1.5; }
+  .markdown-body code { background: #f1f5f9; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875em; }
+  .markdown-body pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; }
+  .markdown-body pre code { background: transparent; padding: 0; color: inherit; }
+  .markdown-body blockquote { border-left: 3px solid #cbd5e1; padding-left: 1rem; color: #64748b; margin-bottom: 0.5rem; }
+  .markdown-body a { color: #2563eb; text-decoration: underline; }
+  .markdown-body table { width: 100%; border-collapse: collapse; margin-bottom: 0.75rem; }
+  .markdown-body th, .markdown-body td { border: 1px solid #e2e8f0; padding: 0.5rem; text-align: left; }
+  .markdown-body th { background: #f8fafc; font-weight: 600; }
+  .markdown-body hr { border-top: 1px solid #e2e8f0; margin: 1rem 0; }
+
+  /* Focus styles */
+  *:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+  /* Smooth scroll */
+  html { scroll-behavior: smooth; }
+</style>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased">
+
+<div id="root"></div>
+
+<noscript>
+  <div style="padding:2rem;text-align:center;font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;">
+    <h1 style="color:#1e3a5f;margin-bottom:1rem;">Passdown — Knowledge Transfer System</h1>
+    <p style="color:#64748b;">This application requires JavaScript to run. Please enable JavaScript in your browser settings and reload the page.</p>
+  </div>
+</noscript>
+
+<!-- OPSEC Disclaimer -->
+<div class="no-print fixed bottom-0 left-0 right-0 bg-slate-900/90 text-slate-400 text-xs text-center py-1 px-4 z-50">
+  OPSEC NOTICE: Do not enter classified or operationally sensitive information. This tool uses browser local storage only — no data is transmitted to external servers.
+</div>
+
+<script type="module">
+import htm from 'https://esm.sh/htm@3.1.1';
+
+const html = htm.bind(React.createElement);
+
+// Dynamic import of the App component
+const { default: App } = await import('./js/components/app.js');
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(html`<${App} />`);
+</script>
+
+</body>
+</html>

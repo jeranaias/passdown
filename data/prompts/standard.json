@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "title": "Standard Billet Turnover Interview",
+  "prompts": [
+    {
+      "id": "p01",
+      "question": "What is the primary mission of your billet, and how does it contribute to your unit's overall mission?",
+      "guidance": "Think about the core purpose of your position. What would fail or degrade if this billet were vacant for 30 days?"
+    },
+    {
+      "id": "p02",
+      "question": "Describe a typical week in this billet. What are the recurring meetings, deadlines, and touchpoints?",
+      "guidance": "Walk through Monday to Friday. What happens every week without fail? What are you expected to attend or produce?"
+    },
+    {
+      "id": "p03",
+      "question": "Who are the three to five people or offices you interact with most frequently, and what do you work with them on?",
+      "guidance": "Think about daily or weekly contacts. Include both internal (within your unit) and external (higher HQ, adjacent units, outside agencies)."
+    },
+    {
+      "id": "p04",
+      "question": "What are the most important processes or SOPs you manage or execute? Where are they documented?",
+      "guidance": "Consider both formal written SOPs and informal 'the way we do it here' processes. Note file locations, share drives, or system names."
+    },
+    {
+      "id": "p05",
+      "question": "What are the biggest 'gotchas' or lessons learned that a new person in this billet needs to know immediately?",
+      "guidance": "Think about mistakes you made early on, things that surprised you, or institutional knowledge that isn't written down anywhere."
+    },
+    {
+      "id": "p06",
+      "question": "What decisions have you made that your successor should understand the reasoning behind?",
+      "guidance": "These are choices where the 'why' matters as much as the 'what.' Include context about constraints, tradeoffs, or political factors."
+    },
+    {
+      "id": "p07",
+      "question": "What are the active issues or ongoing projects that need immediate attention from your successor?",
+      "guidance": "Include anything with a deadline in the next 90 days, unresolved problems, or initiatives in progress. Note current status and next steps."
+    },
+    {
+      "id": "p08",
+      "question": "What annual or periodic events does this billet manage or participate in? When do they occur and what preparation is needed?",
+      "guidance": "Think through the fiscal year and training cycle. Include inspections, exercises, reports, ceremonies, and budget milestones."
+    },
+    {
+      "id": "p09",
+      "question": "What systems, tools, or accounts does this billet require access to? Are there any pending access requests?",
+      "guidance": "List all IT systems, databases, shared drives, distribution lists, and physical access requirements. Note any with long lead times for access."
+    },
+    {
+      "id": "p10",
+      "question": "What would you do differently if you were starting this billet over again? What advice would you give your successor?",
+      "guidance": "This is your chance to share wisdom. What do you wish someone had told you on Day 1?"
+    },
+    {
+      "id": "p11",
+      "question": "Are there any political dynamics, sensitivities, or relationship nuances that your successor should be aware of?",
+      "guidance": "Think about inter-unit relationships, personality dynamics with key stakeholders, or topics that require careful handling. Keep it professional."
+    },
+    {
+      "id": "p12",
+      "question": "What resources, references, or reading materials would you recommend for someone new to this billet?",
+      "guidance": "Include orders, directives, regulations, websites, manuals, or informal reference documents that you consult regularly."
+    }
+  ]
+}

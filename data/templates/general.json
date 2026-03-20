@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "title": "General Billet Turnover",
+  "description": "Generic starter template applicable to any military billet. Replace placeholder text with your specifics.",
+  "entries": [
+    {
+      "id": "proc-daily-weekly",
+      "category": "process",
+      "title": "Daily and Weekly Routine",
+      "content": "Describe your typical daily and weekly routine. Include what time you arrive, recurring meetings, when you check key systems, and the weekly battle rhythm. Note the difference between the published schedule and what actually matters — which meetings are must-attend vs. send-a-rep, and which tasks have hard deadlines vs. flexible ones.",
+      "tags": ["routine", "daily", "weekly", "battle-rhythm"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "proc-reporting",
+      "category": "process",
+      "title": "Reporting Requirements",
+      "content": "Describe all recurring reports you are responsible for. Include the report name, frequency, audience, format, data sources, and submission deadline. Note which reports are formally required vs. informally expected, and which ones leadership actually reads.",
+      "tags": ["reporting", "recurring", "deliverables"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "proc-travel",
+      "category": "process",
+      "title": "Travel Procedures and Common TDY",
+      "content": "Describe the travel request and approval process for your billet. Include DTS procedures, who approves, typical lead times, and any recurring TDY trips (conferences, site visits, training events). Note common DTS issues and workarounds.",
+      "tags": ["travel", "dts", "tdy"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "stake-supervisor",
+      "category": "stakeholder",
+      "title": "Immediate Supervisor",
+      "content": "Describe the working relationship with your immediate supervisor (by billet title). Include their leadership style, communication preferences, what they expect from you, how often you meet one-on-one, and what issues they want to be informed about vs. what they expect you to handle independently.",
+      "tags": ["supervisor", "chain-of-command", "key-relationship"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-peers",
+      "category": "stakeholder",
+      "title": "Key Peers and Counterparts",
+      "content": "Describe the 3-5 peers or counterparts you coordinate with most frequently. Include their billet titles, what you coordinate on, the relationship dynamic, and any tips for working with them effectively. Note who is especially helpful and who requires extra effort to coordinate with.",
+      "tags": ["peers", "coordination", "relationships"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 90
+    },
+    {
+      "id": "stake-admin",
+      "category": "stakeholder",
+      "title": "Admin and Support Contacts",
+      "content": "Describe the key admin and support contacts for your billet. Include the admin chief or office manager, IT support POC, facilities POC, supply POC, and anyone else who handles logistics for your section. Note how to get things done (work orders, supply requests, IT tickets) and any tips for navigating the admin process.",
+      "tags": ["admin", "support", "logistics"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 180
+    },
+    {
+      "id": "cal-recurring",
+      "category": "calendar",
+      "title": "Recurring Meetings and Annual Events",
+      "content": "List all recurring events relevant to your billet. Include standing meetings (day, time, purpose), annual events (inspections, reviews, conferences), and any seasonal workload spikes. For annual events, note the planning lead time required.",
+      "tags": ["calendar", "meetings", "annual", "recurring"],
+      "priority": "high",
+      "recurrence": "yearly",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "lesson-onboarding",
+      "category": "lesson",
+      "title": "First 30 Days — What to Prioritize",
+      "content": "Describe what you would tell your successor to focus on in their first 30 days. Include who to meet with first, what to read, what systems to get access to, and what to avoid doing too early. Note the single most important thing to get right in the first month.",
+      "tags": ["onboarding", "first-30-days", "advice"],
+      "priority": "high",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "lesson-gotchas",
+      "category": "lesson",
+      "title": "Gotchas and Unwritten Rules",
+      "content": "Describe the unwritten rules, institutional quirks, and non-obvious gotchas for this billet. Include things like parking, building access after hours, which printer actually works, how the coffee fund works, and any organizational sensitivities that aren't documented anywhere.",
+      "tags": ["gotchas", "unwritten-rules", "institutional-knowledge"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    },
+    {
+      "id": "dec-placeholder",
+      "category": "decision",
+      "title": "[Placeholder] Key Decision — Describe Decision",
+      "content": "Describe a significant decision you made in this billet that your successor needs to understand. Include: (1) What the decision was, (2) What alternatives were considered, (3) Why this option was chosen, (4) What the consequences of reversal would be, (5) What conditions should trigger a re-evaluation.",
+      "tags": ["decision-log", "continuity"],
+      "priority": "medium",
+      "verifiedAt": null,
+      "expiresInDays": 365
+    }
+  ]
+}
