@@ -3,7 +3,7 @@
  * Enables offline functionality — cache local assets, network-first for CDN/AI
  */
 
-const CACHE_NAME = 'passdown-v3';
+const CACHE_NAME = 'passdown-v4';
 
 // Local assets to pre-cache on install
 const LOCAL_ASSETS = [
@@ -34,6 +34,12 @@ const LOCAL_ASSETS = [
   './js/components/settings.js',
   './js/components/print-view.js',
   './js/components/file-drop-zone.js',
+  './js/components/federation.js',
+  './js/components/analytics.js',
+  './js/core/webllm-service.js',
+  './js/core/olf-export.js',
+  './js/core/file-converter.js',
+  './data/olf/schema.json',
   './data/prompts/standard.json',
   './data/prompts/occfield-specific.json',
   './data/templates/occfield-manager.json',

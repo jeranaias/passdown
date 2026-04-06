@@ -646,7 +646,7 @@ export default function Dashboard() {
           </p>
           <button
             onClick=${() => {
-              window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: 'Help me get started. Draft 5 starter entries for an OccField Manager billet covering the most important processes, stakeholders, and calendar events.' } }));
+              window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: `Help me get started. Draft 5 starter entries for a ${billet?.title || 'military'} billet covering the most important processes, stakeholders, and calendar events.` } }));
             }}
             class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-navy-700 hover:bg-navy-800 rounded-lg transition-colors"
           >

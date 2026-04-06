@@ -225,7 +225,7 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav role="navigation" class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
 
         <${NavItem}
           icon=${HomeIcon()}
@@ -616,6 +616,16 @@ export default function App() {
     setSettingsState(newSettings);
   }, []);
 
+  const refreshFromStore = useCallback(() => {
+    const data = Store.load();
+    setBilletState(data.billet);
+    setEntries(data.entries);
+    setNarratives(data.narratives);
+    setStartHereIds(data.startHere);
+    setSettingsState(data.settings);
+    setSearchIndex(buildIndex(data.entries));
+  }, []);
+
   // Context value
   const contextValue = useMemo(() => ({
     billet,
@@ -635,6 +645,7 @@ export default function App() {
     updateNarrative,
     setStartHere,
     setSettings,
+    refreshFromStore,
 
     addToast,
     dismissToast,
@@ -642,7 +653,7 @@ export default function App() {
   }), [
     billet, entries, narratives, startHereIds, settings, searchIndex, toasts,
     activeHash, addEntry, updateEntry, deleteEntry, setBillet,
-    addNarrative, updateNarrative, setStartHere, setSettings,
+    addNarrative, updateNarrative, setStartHere, setSettings, refreshFromStore,
     addToast, dismissToast,
   ]);
 
@@ -702,6 +713,7 @@ export default function App() {
       <button
         onClick=${() => setAiChatOpen(true)}
         className="fixed bottom-10 right-6 w-14 h-14 bg-navy-700 hover:bg-navy-600 text-white rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-105 z-40 no-print"
+        aria-label="Open AI Assistant"
         title="AI Assistant (Ctrl+K)"
       >
         ${IconChat({ size: 24 })}

@@ -53,8 +53,18 @@ function stripBilletSpecificData(entry) {
     stripped.meta = cleanMeta;
   }
 
-  // Generalize specific date references in content
-  // (keep structure but remove things that look like specific names/dates)
+  // Scan content for PII patterns and redact
+  if (stripped.content && typeof stripped.content === 'string') {
+    let content = stripped.content;
+    // Names with rank prefixes
+    content = content.replace(/\b(Pvt|PFC|LCpl|Cpl|Sgt|SSgt|GySgt|MSgt|1stSgt|MGySgt|SgtMaj|2ndLt|1stLt|Capt|Maj|LtCol|Col|BGen|MajGen|LtGen|Gen|Mr\.|Ms\.|Mrs\.)\s+[A-Z][a-z]+/g, '[BILLET HOLDER]');
+    // Email addresses
+    content = content.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[email redacted]');
+    // Phone numbers
+    content = content.replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[phone redacted]');
+    stripped.content = content;
+  }
+
   return stripped;
 }
 
@@ -208,8 +218,24 @@ function GallerySection() {
     fetch('./data/templates/index.json')
       .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) setTemplates(data);
-        setLoading(false);
+        const index = data && Array.isArray(data.templates) ? data.templates : (Array.isArray(data) ? data : []);
+        if (index.length === 0) { setLoading(false); return; }
+        return Promise.all(index.map(meta =>
+          meta.file
+            ? fetch('./data/templates/' + meta.file)
+                .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+                .then(tpl => ({
+                  id: meta.id,
+                  name: meta.name,
+                  description: meta.description,
+                  entries: Array.isArray(tpl.entries) ? tpl.entries : [],
+                }))
+                .catch(() => ({ ...meta, entries: meta.entries || [] }))
+            : Promise.resolve({ ...meta, entries: meta.entries || [] })
+        )).then(loaded => {
+          if (loaded.length > 0) setTemplates(loaded);
+          setLoading(false);
+        });
       })
       .catch(() => { setLoading(false); });
   }, []);

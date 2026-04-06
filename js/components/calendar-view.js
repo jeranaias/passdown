@@ -98,6 +98,35 @@ function getUpcomingEvents(calendarEntries) {
   return upcoming;
 }
 
+// ─── Recurrence description ─────────────────────────────────────────────────
+
+function describeRecurrence(entry) {
+  const meta = entry.meta || {};
+  const recurrence = meta.recurrence || 'annual';
+  switch (recurrence) {
+    case 'annual': {
+      const month = parseInt(meta.month, 10);
+      if (month >= 1 && month <= 12) {
+        return 'Annually in ' + MONTH_NAMES_FULL[month - 1];
+      }
+      return 'Annual';
+    }
+    case 'quarterly':
+      return 'Every quarter';
+    case 'monthly': {
+      const day = parseInt(meta.dayOfMonth, 10);
+      if (day >= 1 && day <= 31) {
+        return 'Monthly on day ' + day;
+      }
+      return 'Monthly';
+    }
+    case 'weekly':
+      return 'Weekly';
+    default:
+      return RECURRENCE_LABELS[recurrence] || recurrence;
+  }
+}
+
 // ─── Event Chip (in month cell) ──────────────────────────────────────────────
 
 function EventChip({ entry, onClick }) {
@@ -134,7 +163,7 @@ function UpcomingRow({ item, onClick }) {
         <div class="flex items-center gap-2 flex-wrap">
           <h4 class="text-sm font-medium text-navy-900 truncate">${entry.title}</h4>
           <span class=${'text-xs px-1.5 py-0.5 rounded ' + colors.bg + ' ' + colors.text}>
-            ${RECURRENCE_LABELS[recurrence] || recurrence}
+            ${describeRecurrence(entry)}
           </span>
         </div>
         ${(entry.content || '').trim() && html`
@@ -299,7 +328,7 @@ export default function CalendarView() {
                   <div class="flex items-center gap-2 flex-wrap">
                     <h4 class="text-sm font-medium text-navy-900">${entry.title}</h4>
                     <span class=${'text-xs px-1.5 py-0.5 rounded ' + colors.bg + ' ' + colors.text}>
-                      ${RECURRENCE_LABELS[recurrence] || recurrence}
+                      ${describeRecurrence(entry)}
                     </span>
                     <${Badge} color=${vb.color}>${vb.label}<//>
                   </div>

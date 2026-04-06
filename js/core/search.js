@@ -21,7 +21,7 @@ function tokenize(text) {
   if (!text || typeof text !== 'string') return [];
   return text
     .toLowerCase()
-    .split(/[^a-z0-9]+/)
+    .split(/[^a-z0-9+\-\/]+/)
     .filter(t => t.length > 1 && !STOPWORDS.has(t));
 }
 

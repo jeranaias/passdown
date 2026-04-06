@@ -1,0 +1,25 @@
+{
+  "templates": [
+    {
+      "id": "occfield-manager",
+      "name": "OccField Manager",
+      "description": "19 starter entries for HQMC OccField manager billets including MOS Manual processes, M&RA coordination, and school seat management.",
+      "file": "occfield-manager.json",
+      "entryCount": 19
+    },
+    {
+      "id": "branch-chief",
+      "name": "Branch Chief",
+      "description": "12 starter entries for branch chief billets including operations rhythm, DirOps reporting, and staff coordination.",
+      "file": "branch-chief.json",
+      "entryCount": 12
+    },
+    {
+      "id": "general",
+      "name": "General Billet",
+      "description": "10 generic starter entries applicable to any military billet.",
+      "file": "general.json",
+      "entryCount": 10
+    }
+  ]
+}

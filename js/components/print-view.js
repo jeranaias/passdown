@@ -33,6 +33,18 @@ export default function PrintView() {
 
   const groupKeys = Object.keys(grouped);
 
+  const essentialEntries = useMemo(() =>
+    entries.filter(e => e.essentialReading).sort((a, b) => {
+      const pOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+      return (pOrder[a.priority] || 2) - (pOrder[b.priority] || 2);
+    }),
+    [entries]
+  );
+
+  const PRIORITY_LABELS = { critical: 'CRITICAL', high: 'High', medium: 'Medium', low: 'Low' };
+  const PRIORITY_COLORS = { critical: 'text-red-700', high: 'text-orange-700', medium: 'text-slate-600', low: 'text-slate-400' };
+  const STATUS_LABELS = { current: 'Verified', expiring: 'Expiring', stale: 'Stale', unverified: 'Unverified' };
+
   return html`
     <div class="max-w-4xl mx-auto px-4 py-8">
       <!-- Controls (hidden in print) -->
@@ -73,6 +85,28 @@ export default function PrintView() {
           </ol>
         </div>
 
+        <!-- Start Here: Essential Reading -->
+        ${essentialEntries.length > 0 && html`
+          <div class="essential-section bg-amber-50 border border-amber-300 rounded-lg p-6 mb-6">
+            <h2 class="text-lg font-bold text-amber-900 mb-3">Start Here -- Essential Reading</h2>
+            <p class="text-sm text-amber-700 mb-4">These entries have been flagged as essential reading for onboarding. Review them first.</p>
+            <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+              ${essentialEntries.map(entry => {
+                const cat = CATEGORIES.find(c => c.id === entry.category);
+                return html`
+                  <li key=${entry.id}>
+                    <strong>${entry.title}</strong>
+                    <span class="text-slate-400 ml-1">(${cat ? cat.label : entry.category})</span>
+                    ${entry.priority && html`
+                      <span class=${'ml-1 ' + (PRIORITY_COLORS[entry.priority] || '')}>[${PRIORITY_LABELS[entry.priority] || entry.priority}]</span>
+                    `}
+                  </li>
+                `;
+              })}
+            </ol>
+          </div>
+        `}
+
         <!-- Entries by Category -->
         ${groupKeys.map((key, idx) => {
           const { category, entries: catEntries } = grouped[key];
@@ -87,8 +121,22 @@ export default function PrintView() {
                   return html`
                     <div key=${entry.id} class="entry-card bg-white border border-slate-200 rounded-lg p-4">
                       <div class="flex items-start justify-between mb-2">
-                        <h3 class="text-base font-semibold text-navy-900">${entry.title}</h3>
-                        <span class="text-xs text-slate-500">${status}</span>
+                        <div class="flex items-center gap-2">
+                          <h3 class="text-base font-semibold text-navy-900">${entry.title}</h3>
+                          ${entry.essentialReading && html`
+                            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Essential Reading</span>
+                          `}
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          ${entry.priority && html`
+                            <span class=${'text-xs font-medium ' + (PRIORITY_COLORS[entry.priority] || 'text-slate-500')}>
+                              ${PRIORITY_LABELS[entry.priority] || entry.priority}
+                            </span>
+                          `}
+                          <span class=${'text-xs ' + (status === 'current' ? 'text-green-600' : status === 'expiring' ? 'text-amber-600' : status === 'stale' ? 'text-red-600' : 'text-slate-400')}>
+                            ${STATUS_LABELS[status] || status}
+                          </span>
+                        </div>
                       </div>
                       ${entry.content && html`
                         <div class="mb-2">
@@ -99,6 +147,10 @@ export default function PrintView() {
                         ${entry.tags && entry.tags.length > 0 && html`
                           <span>Tags: ${entry.tags.join(', ')}</span>
                         `}
+                        ${entry.priority && html`
+                          <span>Priority: ${PRIORITY_LABELS[entry.priority] || entry.priority}</span>
+                        `}
+                        <span>Verification: ${STATUS_LABELS[status] || status}</span>
                         ${entry.verifiedAt && html`
                           <span>Last verified: ${formatDate(entry.verifiedAt)}</span>
                         `}

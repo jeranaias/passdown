@@ -128,6 +128,7 @@ function ExportSection() {
 // ─── Import Section ──────────────────────────────────────────────────────────
 
 function ImportSection() {
+  const { refreshFromStore, navigate } = useApp();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [mode, setMode] = useState('merge');
@@ -162,10 +163,11 @@ function ImportSection() {
     if (!preview) return;
     try {
       Store.importAll(preview.data, mode);
+      refreshFromStore();
       showToast('Import complete (' + mode + ' mode)', 'success');
       setFile(null); setPreview(null); setConfirmOpen(false);
       if (fileRef.current) fileRef.current.value = '';
-      window.location.reload();
+      navigate('browse');
     } catch (err) {
       showToast('Import failed: ' + err.message, 'error');
     }
@@ -236,6 +238,7 @@ function ImportSection() {
 // ─── Templates Section ───────────────────────────────────────────────────────
 
 function TemplatesSection() {
+  const { addEntry: addEntryToContext, navigate } = useApp();
   const [templates, setTemplates] = useState(DEFAULT_TEMPLATES);
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [confirmTemplate, setConfirmTemplate] = useState(null);
@@ -243,22 +246,41 @@ function TemplatesSection() {
   useEffect(() => {
     fetch('./data/templates/index.json')
       .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
-      .then(data => { if (Array.isArray(data) && data.length > 0) setTemplates(data); })
+      .then(data => {
+        const index = data && Array.isArray(data.templates) ? data.templates : (Array.isArray(data) ? data : []);
+        if (index.length === 0) return;
+        // Load each template's entries from its file
+        return Promise.all(index.map(meta =>
+          meta.file
+            ? fetch('./data/templates/' + meta.file)
+                .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+                .then(tpl => ({
+                  id: meta.id,
+                  name: meta.name,
+                  description: meta.description,
+                  entries: Array.isArray(tpl.entries) ? tpl.entries : [],
+                }))
+                .catch(() => ({ ...meta, entries: meta.entries || [] }))
+            : Promise.resolve({ ...meta, entries: meta.entries || [] })
+        )).then(loaded => {
+          if (loaded.length > 0) setTemplates(loaded);
+        });
+      })
       .catch(() => {});
   }, []);
 
   const handleLoadTemplate = useCallback((template) => {
     try {
       for (const entry of template.entries) {
-        Store.addEntry({ ...entry, tags: entry.tags || [], meta: entry.meta || {} });
+        addEntryToContext({ ...entry, tags: entry.tags || [], meta: entry.meta || {} });
       }
       showToast(template.entries.length + ' entries added from template', 'success');
       setConfirmTemplate(null);
-      window.location.reload();
+      navigate('browse');
     } catch (err) {
       showToast('Failed to load template: ' + err.message, 'error');
     }
-  }, []);
+  }, [addEntryToContext, navigate]);
 
   return html`
     <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-4">

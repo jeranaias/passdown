@@ -517,7 +517,12 @@ function PendingEntryCard({ entry, onApprove, onDismiss }) {
 
 export default function AIChatSidebar({ isOpen, onClose }) {
   const { entries, billet, narratives, addEntry } = useApp();
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('passdown_ai_chat');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [loading, setLoading] = useState(false);
   const [pendingEntry, setPendingEntry] = useState(null);
   const [webllmLoading, setWebllmLoading] = useState(false);
@@ -536,6 +541,13 @@ export default function AIChatSidebar({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) setWebllmReady(WebLLMService.isAvailable());
   }, [isOpen]);
+
+  // Persist chat messages to sessionStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem('passdown_ai_chat', JSON.stringify(messages));
+    }
+  }, [messages]);
 
   // Get current page from hash
   const getCurrentPage = useCallback(() => {
@@ -622,6 +634,7 @@ export default function AIChatSidebar({ isOpen, onClose }) {
   // Clear chat
   const handleClear = useCallback(() => {
     setMessages([]);
+    sessionStorage.removeItem('passdown_ai_chat');
   }, []);
 
   // Handle suggestion click (from welcome screen)

@@ -7,6 +7,7 @@ import { useApp } from './app.js';
 import Store from '../core/store.js';
 import { Button, ProgressBar, showToast } from '../shared/ui.js';
 import { IconChat, IconCheck, IconEdit, IconEye } from '../shared/icons.js';
+import { MarkdownPreview } from '../shared/markdown.js';
 
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
@@ -68,6 +69,7 @@ function CaptureMode({ prompts, responses, onSaveResponse, onSkip }) {
   const [followUps, setFollowUps] = useState([]);
   const [followUpAnswers, setFollowUpAnswers] = useState({});
   const [loadingFollowUps, setLoadingFollowUps] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const textareaRef = useRef(null);
 
   const currentPrompt = prompts[currentIndex];
@@ -132,16 +134,58 @@ function CaptureMode({ prompts, responses, onSaveResponse, onSkip }) {
           <p class="text-sm text-slate-500 italic leading-relaxed">${currentPrompt.guidance}</p>
         `}
 
-        <textarea
-          ref=${textareaRef}
-          value=${response}
-          onChange=${e => setResponse(e.target.value)}
-          rows="8"
-          class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm leading-relaxed
-                 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500
-                 placeholder-slate-400 resize-y"
-          placeholder="Type your response here..."
-        />
+        <!-- Write / Preview Toggle -->
+        <div class="flex items-center justify-end mb-1">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              onClick=${() => setShowPreview(false)}
+              class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
+                + (!showPreview
+                  ? 'bg-navy-100 text-navy-700'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
+              <span class="flex items-center gap-1">
+                <${IconEdit} size=${14} />
+                Write
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick=${() => setShowPreview(true)}
+              class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
+                + (showPreview
+                  ? 'bg-navy-100 text-navy-700'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
+              <span class="flex items-center gap-1">
+                <${IconEye} size=${14} />
+                Preview
+              </span>
+            </button>
+          </div>
+        </div>
+
+        ${!showPreview
+          ? html`
+            <textarea
+              ref=${textareaRef}
+              value=${response}
+              onChange=${e => setResponse(e.target.value)}
+              rows="8"
+              class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm leading-relaxed
+                     focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500
+                     placeholder-slate-400 resize-y"
+              placeholder="Type your response here... Markdown is supported."
+            />
+          `
+          : html`
+            <div class="min-h-[200px] p-4 border border-slate-300 rounded-lg bg-slate-50 overflow-auto">
+              ${response.trim()
+                ? html`<${MarkdownPreview} content=${response} />`
+                : html`<p class="text-slate-400 italic text-sm">Nothing to preview.</p>`
+              }
+            </div>
+          `
+        }
 
         ${existingResponse && existingResponse.skipped && html`
           <div class="text-xs text-amber-600 font-medium">Previously skipped. You can add a response now.</div>
@@ -340,14 +384,25 @@ export default function Narrative() {
   const [mode, setMode] = useState('capture');
   const [promptsLoaded, setPromptsLoaded] = useState(false);
 
-  // Try to load prompts from data file
+  // Try to load prompts from data files (standard + occfield-specific)
   useEffect(() => {
-    fetch('./data/prompts/standard.json')
+    const standardFetch = fetch('./data/prompts/standard.json')
       .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
-      .then(data => {
-        if (data && Array.isArray(data.prompts) && data.prompts.length > 0) {
-          setPrompts(data.prompts);
+      .then(data => (data && Array.isArray(data.prompts)) ? data.prompts : [])
+      .catch(() => []);
+
+    const occfieldFetch = fetch('./data/prompts/occfield-specific.json')
+      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(data => (data && Array.isArray(data.prompts)) ? data.prompts : [])
+      .catch(() => []);
+
+    Promise.all([standardFetch, occfieldFetch])
+      .then(([standard, occfield]) => {
+        const combined = [...standard, ...occfield];
+        if (combined.length > 0) {
+          setPrompts(combined);
         }
+        // else keep DEFAULT_PROMPTS
       })
       .catch(() => { /* Use inline defaults */ })
       .finally(() => setPromptsLoaded(true));

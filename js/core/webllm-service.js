@@ -131,13 +131,20 @@ const WebLLMService = {
         });
       }
 
-      const response = await this.engine.chat.completions.create({
+      const timeoutMs = 30000;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Response timeout')), timeoutMs)
+      );
+
+      const chatPromise = this.engine.chat.completions.create({
         messages: chatMessages,
         temperature: 0.5,
         max_tokens: 512,
         frequency_penalty: 0.8,
         presence_penalty: 0.4,
       });
+
+      const response = await Promise.race([chatPromise, timeoutPromise]);
 
       const text = response.choices?.[0]?.message?.content || '';
       return text;
@@ -154,43 +161,53 @@ const WebLLMService = {
       throw new Error('WebLLM engine is not initialized. Call init() first.');
     }
 
-    try {
-      const chatMessages = [];
+    const chatMessages = [];
 
-      // System prompt
-      if (systemPrompt) {
-        chatMessages.push({ role: 'system', content: systemPrompt });
-      }
+    // System prompt
+    if (systemPrompt) {
+      chatMessages.push({ role: 'system', content: systemPrompt });
+    }
 
-      // Conversation history
-      for (const msg of messages) {
-        chatMessages.push({
-          role: msg.role === 'model' ? 'assistant' : msg.role,
-          content: msg.content,
-        });
-      }
-
-      const stream = await this.engine.chat.completions.create({
-        messages: chatMessages,
-        temperature: 0.5,
-        max_tokens: 512,
-        frequency_penalty: 0.8,
-        presence_penalty: 0.4,
-        stream: true,
+    // Conversation history
+    for (const msg of messages) {
+      chatMessages.push({
+        role: msg.role === 'model' ? 'assistant' : msg.role,
+        content: msg.content,
       });
+    }
 
-      let fullText = '';
-      for await (const chunk of stream) {
-        const delta = chunk.choices?.[0]?.delta?.content || '';
-        if (delta) {
-          fullText += delta;
-          if (typeof onChunk === 'function') {
-            onChunk(fullText);
+    const stream = await this.engine.chat.completions.create({
+      messages: chatMessages,
+      temperature: 0.5,
+      max_tokens: 512,
+      frequency_penalty: 0.8,
+      presence_penalty: 0.4,
+      stream: true,
+    });
+
+    let fullText = '';
+    const timeoutMs = 60000;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Response timeout')), timeoutMs)
+    );
+
+    try {
+      const streamPromise = (async () => {
+        for await (const chunk of stream) {
+          const delta = chunk.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            fullText += delta;
+            if (typeof onChunk === 'function') {
+              onChunk(fullText);
+            }
           }
         }
-      }
-      return fullText;
+        return fullText;
+      })();
+
+      return await Promise.race([streamPromise, timeoutPromise]);
     } catch (err) {
+      if (fullText) return fullText; // Return partial response on timeout
       console.error('[WebLLM] Stream chat error:', err);
       throw new Error('WebLLM streaming chat failed: ' + (err.message || 'Unknown error'));
     }

@@ -13,7 +13,7 @@ import {
 import { MarkdownPreview } from '../shared/markdown.js';
 import FileDropZone from './file-drop-zone.js';
 
-const { useState, useCallback, useContext, useMemo, useRef } = React;
+const { useState, useCallback, useContext, useMemo, useRef, useEffect } = React;
 
 // ─── Category icon lookup ────────────────────────────────────────────────────
 
@@ -179,6 +179,21 @@ export default function Capture() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // ─── Unsaved changes warning ─────────────────────────────────────────────
+
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
   // ─── Tag input ref ────────────────────────────────────────────────────────
 
   const tagInputRef = useRef(null);
@@ -274,7 +289,8 @@ export default function Capture() {
       // addEntry already shows its own toast
     }
 
-    navigate('search');
+    setDirty(false);
+    navigate('browse');
   }, [category, title, content, tags, priority, essentialReading, meta, isEdit, entryId, addEntry, updateEntry, navigate, validate]);
 
   // ─── Delete ───────────────────────────────────────────────────────────────
@@ -283,7 +299,7 @@ export default function Capture() {
     deleteEntry(entryId);
     // deleteEntry already shows its own toast
     setShowDeleteConfirm(false);
-    navigate('search');
+    navigate('browse');
   }, [deleteEntry, entryId, navigate]);
 
   // ─── Cancel ───────────────────────────────────────────────────────────────
@@ -374,7 +390,7 @@ export default function Capture() {
               label="Title"
               required=${true}
               value=${title}
-              onChange=${setTitle}
+              onChange=${(v) => { setTitle(v); setDirty(true); }}
               placeholder="Descriptive title for this entry..."
             />
             ${errors.title && html`
@@ -458,7 +474,7 @@ export default function Capture() {
               ? html`
                 <textarea
                   value=${content}
-                  onChange=${(e) => setContent(e.target.value)}
+                  onChange=${(e) => { setContent(e.target.value); setDirty(true); }}
                   rows=${10}
                   placeholder="Write your knowledge here... Markdown is supported."
                   class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
@@ -490,7 +506,7 @@ export default function Capture() {
                 ref=${tagInputRef}
                 type="text"
                 value=${tagInput}
-                onChange=${(e) => setTagInput(e.target.value)}
+                onChange=${(e) => { setTagInput(e.target.value); setDirty(true); }}
                 onKeyDown=${handleTagKeyDown}
                 onBlur=${() => { if (tagInput.trim()) addTagsFromInput(); }}
                 placeholder=${tags.length === 0 ? 'Add tags (comma-separated)...' : 'Add more...'}
@@ -505,7 +521,7 @@ export default function Capture() {
             <${Select}
               label="Priority"
               value=${priority}
-              onChange=${setPriority}
+              onChange=${(v) => { setPriority(v); setDirty(true); }}
               options=${PRIORITIES.map(p => ({ value: p.id, label: p.label }))}
             />
             <div class="flex items-end pb-1">
