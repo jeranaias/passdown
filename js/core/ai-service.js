@@ -131,14 +131,23 @@ Help them configure their billet info and PCS dates. If they need help with AI s
     const billetTitle = billet?.title || 'this billet';
     const billetUnit = billet?.unit || 'this unit';
 
-    // ── Small models: drastically simplified prompt ───────────────────────
+    // ── Small models: concise but helpful prompt ──────────────────────────
     if (modelSize === 'small') {
-      const MAX_CHARS = 2000;
-      let prompt = `You are Passdown AI for the ${billetTitle} billet at ${billetUnit}. Answer questions about the knowledge base below.
-Rules: No PII (use billet titles, not names). Cite entry titles in [brackets]. Be concise.
+      const MAX_CHARS = 3000;
+      let prompt = `You are a helpful assistant for military billet turnover at ${billetUnit}.
+Billet: ${billetTitle}
 
-Entries:\n`;
+Your job: Help the user capture and organize knowledge for their successor. Be helpful, specific, and concise.
 
+Rules:
+- Use billet titles, never personal names
+- If asked to draft content, write clear step-by-step procedures
+- Warn if something sounds classified or sensitive
+
+Knowledge base has ${(entries || []).length} entries across these categories:
+`;
+
+      // Include actual content for the most important entries
       let charCount = prompt.length;
       const sorted = [...(entries || [])].sort((a, b) => {
         const po = { high: 0, medium: 1, low: 2 };
@@ -146,10 +155,22 @@ Entries:\n`;
       });
 
       for (const entry of sorted) {
-        const line = `- ${entry.title} (${entry.category || 'process'})\n`;
+        const snippet = (entry.content || '').substring(0, 150).replace(/\n/g, ' ');
+        const line = `[${entry.category}] ${entry.title}: ${snippet}\n`;
         if (charCount + line.length > MAX_CHARS) break;
         prompt += line;
         charCount += line.length;
+      }
+
+      if (narratives && narratives.length > 0) {
+        prompt += '\nInterview answers:\n';
+        for (const n of narratives) {
+          if (!n.response) continue;
+          const nLine = `Q: ${(n.prompt || '').substring(0, 60)} A: ${(n.response || '').substring(0, 100)}\n`;
+          if (charCount + nLine.length > MAX_CHARS) break;
+          prompt += nLine;
+          charCount += nLine.length;
+        }
       }
 
       return prompt;

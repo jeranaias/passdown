@@ -133,10 +133,10 @@ const WebLLMService = {
 
       const response = await this.engine.chat.completions.create({
         messages: chatMessages,
-        temperature: 0.4,
-        max_tokens: 1024,
-        frequency_penalty: 1.2,
-        presence_penalty: 0.6,
+        temperature: 0.5,
+        max_tokens: 512,
+        frequency_penalty: 0.8,
+        presence_penalty: 0.4,
       });
 
       const text = response.choices?.[0]?.message?.content || '';
@@ -172,10 +172,10 @@ const WebLLMService = {
 
       const stream = await this.engine.chat.completions.create({
         messages: chatMessages,
-        temperature: 0.4,
-        max_tokens: 1024,
-        frequency_penalty: 1.2,
-        presence_penalty: 0.6,
+        temperature: 0.5,
+        max_tokens: 512,
+        frequency_penalty: 0.8,
+        presence_penalty: 0.4,
         stream: true,
       });
 
