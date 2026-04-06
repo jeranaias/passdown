@@ -3,7 +3,7 @@
  * Enables offline functionality — cache local assets, network-first for CDN/AI
  */
 
-const CACHE_NAME = 'passdown-v2';
+const CACHE_NAME = 'passdown-v3';
 
 // Local assets to pre-cache on install
 const LOCAL_ASSETS = [
@@ -122,24 +122,23 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Local assets: cache-first
+  // Local assets: network-first with cache fallback (always gets fresh code when online)
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200 || event.request.method !== 'GET') {
-          return response;
-        }
+    fetch(event.request).then(response => {
+      if (response && response.ok && event.request.method === 'GET') {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
-      });
-    }).catch(() => {
-      // Offline fallback for HTML pages
-      if (event.request.headers.get('accept')?.includes('text/html')) {
-        return caches.match('./index.html');
       }
+      return response;
+    }).catch(() => {
+      // Offline: serve from cache
+      return caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        // Last resort: serve index.html for HTML requests
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('./index.html');
+        }
+      });
     })
   );
 });

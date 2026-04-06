@@ -1,6 +1,7 @@
 import { html } from '../core/config.js';
 import CONFIG, { CATEGORIES, VERIFICATION_INTERVAL_DAYS } from '../core/config.js';
 import AIService from '../core/ai-service.js';
+import WebLLMService from '../core/webllm-service.js';
 import { AppContext, navigate } from './app.js';
 import { Button, Badge, Card, ProgressBar, showToast } from '../shared/ui.js';
 import { ICON_MAP, IconWarning, IconCheck, IconClock, IconStar } from '../shared/icons.js';
@@ -624,6 +625,38 @@ export default function Dashboard() {
 
       <!-- PCS Timeline -->
       <${PCSTimeline} billet=${billet} entries=${entries} />
+
+      <!-- AI Quick Start (when KB is mostly empty and AI model is loaded) -->
+      ${entries.length < 3 && WebLLMService.isAvailable() && html`
+        <div class="bg-gradient-to-r from-navy-50 to-blue-50 border border-navy-200 rounded-xl p-6 space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-navy-100 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-navy-600">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-navy-900">AI Quick Start</h3>
+              <p class="text-sm text-navy-600">Let AI help you build your knowledge base</p>
+            </div>
+          </div>
+          <p class="text-sm text-slate-600">
+            Your knowledge base is ${entries.length === 0 ? 'empty' : 'just getting started'}.
+            Open the AI assistant and ask it to draft starter entries for your billet type.
+          </p>
+          <button
+            onClick=${() => {
+              window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: 'Help me get started. Draft 5 starter entries for an OccField Manager billet covering the most important processes, stakeholders, and calendar events.' } }));
+            }}
+            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-navy-700 hover:bg-navy-800 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+            </svg>
+            Generate Starter Entries with AI
+          </button>
+        </div>
+      `}
 
       <!-- Quick Stats -->
       <${QuickStats}

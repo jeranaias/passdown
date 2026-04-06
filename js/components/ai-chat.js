@@ -291,9 +291,20 @@ function SignInPrompt({ onSignIn }) {
 
 // ─── Welcome Message ─────────────────────────────────────────────────────────
 
-function WelcomePrompt({ onSuggestion, currentPage }) {
+function WelcomePrompt({ onSuggestion, currentPage, entryCount = 0 }) {
   const pageSuggestions = {
-    'dashboard': [
+    'settings': [
+      'What should I do first?',
+      'Help me set up my billet info',
+      'What model should I download?',
+      'Walk me through the settings',
+    ],
+    'dashboard': entryCount === 0 ? [
+      'Help me get started from scratch',
+      'What entries should I create first?',
+      'Draft 5 starter entries for my billet',
+      'What does a good knowledge base look like?',
+    ] : [
       'What should I work on next?',
       'How complete is my knowledge base?',
       'What gaps do I have?',
@@ -301,9 +312,9 @@ function WelcomePrompt({ onSuggestion, currentPage }) {
     ],
     'capture': [
       'Help me write this entry',
-      'What processes should I document?',
-      'Draft a decision log entry for me',
-      'What am I missing in this category?',
+      'What should I include in a process entry?',
+      'Draft a stakeholder entry for me',
+      'Suggest what to document next',
     ],
     'capture/stakeholders': [
       'Who else should I add as a stakeholder?',
@@ -319,9 +330,9 @@ function WelcomePrompt({ onSuggestion, currentPage }) {
     ],
     'narrative': [
       'Help me think about this question',
-      'My answer feels too vague — help me be specific',
-      'What else should I mention here?',
-      'Ask me follow-up questions to go deeper',
+      'My answer feels too vague — be specific',
+      'What would a great answer look like?',
+      'Give me an example response',
     ],
     'verify': [
       'Which entries should I verify first?',
@@ -648,15 +659,15 @@ export default function AIChatSidebar({ isOpen, onClose }) {
     setPendingEntry(null);
   }, []);
 
-  // Listen for open-ai-chat events from other components
+  // Listen for ai-chat-prefill events dispatched by app.js after opening the sidebar
   useEffect(() => {
     const handler = (e) => {
       if (e.detail?.query) {
         handleSend(e.detail.query);
       }
     };
-    window.addEventListener('open-ai-chat', handler);
-    return () => window.removeEventListener('open-ai-chat', handler);
+    window.addEventListener('ai-chat-prefill', handler);
+    return () => window.removeEventListener('ai-chat-prefill', handler);
   }, [handleSend]);
 
   const aiAvailable = AIService.isAvailable();
@@ -716,7 +727,7 @@ export default function AIChatSidebar({ isOpen, onClose }) {
       `}
 
       ${!webllmLoading && webllmReady && messages.length === 0 && !loading && html`
-        <${WelcomePrompt} onSuggestion=${handleSuggestion} currentPage=${currentPage} />
+        <${WelcomePrompt} onSuggestion=${handleSuggestion} currentPage=${currentPage} entryCount=${entries.length} />
       `}
 
       ${!webllmLoading && webllmReady && (messages.length > 0 || loading) && html`
