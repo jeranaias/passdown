@@ -1,6 +1,13 @@
 {
   "templates": [
     {
+      "id": "occfield-manager-complete",
+      "name": "OccField Manager (Complete Example)",
+      "description": "Fully populated example with 31 detailed entries across all categories. Shows what a comprehensive knowledge base looks like.",
+      "file": "occfield-manager-complete.json",
+      "entryCount": 31
+    },
+    {
       "id": "occfield-manager",
       "name": "OccField Manager",
       "description": "19 starter entries for HQMC OccField manager billets including MOS Manual processes, M&RA coordination, and school seat management.",
