@@ -275,7 +275,7 @@ export default function Verification() {
           </div>
           <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div class="text-2xl font-bold text-amber-800">${stats.expiring}</div>
-            <div class="text-xs text-amber-600 font-medium">Expiring (<30d)</div>
+            <div class="text-xs text-amber-600 font-medium">Expiring (under 30d)</div>
           </div>
           <div class="bg-red-50 border border-red-200 rounded-lg p-4">
             <div class="text-2xl font-bold text-red-800">${stats.stale}</div>
