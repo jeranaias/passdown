@@ -3,7 +3,7 @@
     {
       "id": "occfield-manager-complete",
       "name": "OccField Manager (Complete Example)",
-      "description": "Fully populated example with 31 detailed entries across all categories. Shows what a comprehensive knowledge base looks like.",
+      "description": "Fully populated example with 31 entries, 17 narratives, and billet configuration. Shows what a 100% complete knowledge base looks like.",
       "file": "occfield-manager-complete.json",
       "entryCount": 31
     },

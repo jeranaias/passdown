@@ -238,7 +238,7 @@ function ImportSection() {
 // ─── Templates Section ───────────────────────────────────────────────────────
 
 function TemplatesSection() {
-  const { addEntry: addEntryToContext, navigate } = useApp();
+  const { addEntry: addEntryToContext, setBillet, addNarrative, setStartHere, navigate, refreshFromStore } = useApp();
   const [templates, setTemplates] = useState(DEFAULT_TEMPLATES);
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [confirmTemplate, setConfirmTemplate] = useState(null);
@@ -259,6 +259,9 @@ function TemplatesSection() {
                   name: meta.name,
                   description: meta.description,
                   entries: Array.isArray(tpl.entries) ? tpl.entries : [],
+                  billet: tpl.billet || null,
+                  narratives: Array.isArray(tpl.narratives) ? tpl.narratives : null,
+                  startHere: Array.isArray(tpl.startHere) ? tpl.startHere : null,
                 }))
                 .catch(() => ({ ...meta, entries: meta.entries || [] }))
             : Promise.resolve({ ...meta, entries: meta.entries || [] })
@@ -271,16 +274,38 @@ function TemplatesSection() {
 
   const handleLoadTemplate = useCallback((template) => {
     try {
+      // Load entries
       for (const entry of template.entries) {
         addEntryToContext({ ...entry, tags: entry.tags || [], meta: entry.meta || {} });
       }
-      showToast(template.entries.length + ' entries added from template', 'success');
+
+      // Load billet info if present
+      if (template.billet && template.billet.title) {
+        setBillet(template.billet);
+      }
+
+      // Load narratives if present
+      if (template.narratives && Array.isArray(template.narratives)) {
+        for (const narrative of template.narratives) {
+          addNarrative(narrative);
+        }
+      }
+
+      // Load startHere list if present
+      if (template.startHere && Array.isArray(template.startHere)) {
+        setStartHere(template.startHere);
+      }
+
+      const parts = [template.entries.length + ' entries'];
+      if (template.narratives?.length) parts.push(template.narratives.length + ' narratives');
+      if (template.startHere?.length) parts.push(template.startHere.length + ' start-here items');
+      showToast(parts.join(', ') + ' loaded from template', 'success');
       setConfirmTemplate(null);
-      navigate('browse');
+      navigate('dashboard');
     } catch (err) {
       showToast('Failed to load template: ' + err.message, 'error');
     }
-  }, [addEntryToContext, navigate]);
+  }, [addEntryToContext, setBillet, addNarrative, setStartHere, navigate]);
 
   return html`
     <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
@@ -327,7 +352,7 @@ function TemplatesSection() {
       <${ConfirmDialog} isOpen=${confirmTemplate != null} onCancel=${() => setConfirmTemplate(null)}
         onConfirm=${() => handleLoadTemplate(confirmTemplate)}
         title="Load Template"
-        message=${'This will add ' + (confirmTemplate ? confirmTemplate.entries.length : 0) + ' template entries. Existing entries will not be affected.'}
+        message=${confirmTemplate ? ('This will add ' + confirmTemplate.entries.length + ' entries' + (confirmTemplate.narratives ? ', ' + confirmTemplate.narratives.length + ' narratives' : '') + (confirmTemplate.billet ? ', and billet configuration' : '') + '. Existing entries will not be affected.') : ''}
         confirmText="Load Template" />
     </div>
   `;

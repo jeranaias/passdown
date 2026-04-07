@@ -2,6 +2,135 @@
   "version": "1.0.0",
   "name": "OccField Manager (Complete Example)",
   "description": "Fully populated example showing what a comprehensive knowledge base looks like for an HQMC OccField Manager billet.",
+  "billet": {
+    "title": "OccField Manager, 0602",
+    "unit": "PP&O, Future Operations Branch (POF), HQMC",
+    "billetDescription": "Manage the health and development of the 0602 Communications occupational field. Responsibilities include T/O management, school seat allocation, MOS Manual maintenance, monitor coordination, and career path development for all 06XX Marines.",
+    "turnoverDate": "2026-06-15",
+    "incomingDate": "2026-05-15",
+    "notes": ""
+  },
+  "narratives": [
+    {
+      "id": "n_tpl_001",
+      "promptId": "p01",
+      "prompt": "What is the primary mission of your billet, and how does it contribute to your unit's overall mission?",
+      "response": "The primary mission of this billet is to manage the health and development of the 0602 Communications occupational field across the entire Marine Corps. This means I am the single person at HQMC responsible for ensuring the right number of Marines with the right skills exist in the right grades to fill every 06XX billet on every T/O in the force. If this billet goes vacant for 30 days, MOS Manual changes stall, school seat negotiations with TECOM lose their advocate, billet change requests stack up without OccField concurrence, and the M&RA monitor loses their primary coordination partner for assignment decisions. Within PP&O, this billet feeds the Future Operations Branch's ability to project future force structure needs for the communications community. Every decision about whether to create, merge, or delete a communications MOS flows through this desk. The billet is the connective tissue between what the fleet needs and what the institutional Marine Corps can produce and sustain.",
+      "respondedAt": "2026-04-01T10:00:00Z"
+    },
+    {
+      "id": "n_tpl_002",
+      "promptId": "p02",
+      "prompt": "Describe a typical week in this billet. What are the recurring meetings, deadlines, and touchpoints?",
+      "response": "Monday starts with the POF Branch standup at 0800 where each OccField manager gives a 2-minute status update on active issues. Tuesday morning is the weekly call with the M&RA monitor at MPP-40 -- this is the most important recurring event on the calendar and should never be skipped or delegated. Wednesday is generally open for analytical work: pulling TFDW data, building slides for upcoming briefs, or drafting staffing packages. Thursday morning I pull the weekly manning snapshot from TFDW and cross-reference it against the monitor's tracker to catch any discrepancies early. Thursday afternoon is the PP&O front office read-ahead deadline -- any slides or decision papers due to DirOps the following week must be submitted by 1500. Friday is flex for catch-up, but once a month the DirOps holds a formal OccField health review where two or three managers brief their quarterly data. Know your rotation date and start building slides at least two weeks out.",
+      "respondedAt": "2026-04-01T10:15:00Z"
+    },
+    {
+      "id": "n_tpl_003",
+      "promptId": "p03",
+      "prompt": "Who are the three to five people or offices you interact with most frequently, and what do you work with them on?",
+      "response": "The most critical relationship is with the 06XX monitor at M&RA (MPP-40). This person controls assignment decisions for every Marine in your OccField, and if you lose this relationship, you lose your ability to influence where talent goes. Second is the TECOM Training Pipeline Manager at Quantico who manages school seat quotas and course throughput -- without this partnership, your training pipeline analysis is guesswork. Third is your Branch Chief in POF, who is your direct supervisor and the gateway to DirOps for any decision that requires PP&O front office involvement. Fourth is the Communications School Director at Twentynine Palms (MCCES), who runs the actual schoolhouse and can tell you ground truth about instructor shortages, curriculum issues, and student quality that the data systems miss. Fifth is the G-3 communications planner at each MEF, who represents the operational demand signal and provides the fleet feedback that justifies your recommendations to leadership.",
+      "respondedAt": "2026-04-01T10:30:00Z"
+    },
+    {
+      "id": "n_tpl_004",
+      "promptId": "p04",
+      "prompt": "What are the most important processes or SOPs you manage or execute? Where are they documented?",
+      "response": "The four core processes are: (1) MOS Manual change process governed by MCO 1200.17 -- the change template and tracking spreadsheet are on the PP&O SharePoint under OccField Manager Resources; (2) T/O Change Request (TOCR) concurrence process, where the SOP is in the POF Branch SOP binder and the tracking spreadsheet is on the shared drive at S:\\POF\\OccField\\TOCR_Tracker.xlsx; (3) Quarterly MOS Health Report, which follows the DirOps brief template stored on SharePoint -- the data pull procedures are documented in a Word file I created at S:\\POF\\OccField\\0602\\Data_Pull_SOP.docx; and (4) Annual Training Input Plan (TIP) submission to TECOM, due each March, with the template provided by TECOM and archived on the shared drive. The informal but critical process is the weekly monitor sync -- there is no SOP for this, but the rhythm and agenda format are captured in my Outlook recurring appointment notes. I strongly recommend keeping those notes current for your successor.",
+      "respondedAt": "2026-04-01T10:45:00Z"
+    },
+    {
+      "id": "n_tpl_005",
+      "promptId": "p05",
+      "prompt": "What are the biggest 'gotchas' or lessons learned that a new person in this billet needs to know immediately?",
+      "response": "First and most important: TFDW data lags by 60 to 90 days. If you brief TFDW numbers as current inventory to DirOps, you will be wrong and you will lose credibility. Always cross-reference with the monitor's live tracker. Second: never skip the informal pre-coordination step on MOS Manual changes. The formal staffing process is slow enough already -- if you blindside M&RA or TECOM with a change they have not seen, they will object on principle and you lose months. Third: budget narrative season sneaks up on you. The POM cycle submission deadlines are not on the PP&O calendar by default -- you need to track them yourself through the Comptroller's office. Miss the window and your funding request waits another year. Fourth: the T/O Review Board meets quarterly, but the submission deadline is 6 weeks before the board. If you miss the deadline, your TOCR waits 3-4 months. Fifth: the DirOps does not want to be surprised. If something is going sideways with an MOS or a training pipeline, tell your Branch Chief immediately so they can give DirOps a heads-up before it appears in a data brief from M&RA.",
+      "respondedAt": "2026-04-01T11:00:00Z"
+    },
+    {
+      "id": "n_tpl_006",
+      "promptId": "p06",
+      "prompt": "What decisions have you made that your successor should understand the reasoning behind?",
+      "response": "The biggest decision was recommending the merger of MOS 0621 (Field Radio Operator) and 0623 (MAGTF Planner, Communications) into the consolidated 0671 (Data Systems Administrator) track. This was controversial because it eliminated two legacy MOSs with strong community identity, but the data was clear: both MOSs had chronic understrength at the mid-grade level because the skill sets were converging and Marines were laterally moving to 0671 anyway. By consolidating, we created a single healthy pipeline instead of three anemic ones. I also decided to non-concur on II MEF's request for eight additional 0699 billets on the MEF headquarters T/O because the MOS was already at 115% fill and adding billets would have masked the real problem, which was grade structure imbalance. Finally, I pushed to increase school seat quotas for 0631 by 15% based on projected EAS losses, over TECOM's initial objection that they lacked instructor capacity. The compromise was a phased increase with TECOM hiring two additional instructors.",
+      "respondedAt": "2026-04-01T11:15:00Z"
+    },
+    {
+      "id": "n_tpl_007",
+      "promptId": "p07",
+      "prompt": "What are the active issues or ongoing projects that need immediate attention from your successor?",
+      "response": "Three items need attention within the first 30 days. First: the 0612 Field Wireman school seat shortage is critical -- we are 30% under quota this fiscal year due to an instructor billet that has been gapped for five months. I have a package in staffing to TECOM requesting emergency fill authorization, and it needs follow-up by mid-May or it falls off their priority list. Second: the FY27 POM submission for communications MOS restructuring is due to the Comptroller by 1 June. The narrative is drafted but needs final data validation and Branch Chief review. The file is on the shared drive. Third: the annual OccField symposium is scheduled for September and planning must start in earnest by June. The venue reservation at the National Conference Center is confirmed but the concept paper has not been routed yet. Beyond 30 days, the next quarterly MOS Health Report is due to DirOps in July, and the annual Training Input Plan coordination with TECOM begins in January but requires pre-work starting in November.",
+      "respondedAt": "2026-04-01T11:30:00Z"
+    },
+    {
+      "id": "n_tpl_008",
+      "promptId": "p08",
+      "prompt": "What annual or periodic events does this billet manage or participate in? When do they occur and what preparation is needed?",
+      "response": "The annual calendar is anchored by four major events. January through March: Training Input Plan (TIP) development and submission to TECOM. Start pulling pipeline data in November; the formal submission is due in March. April and October: Quarterly MOS Health Reports to DirOps. Begin data pulls three weeks prior and pre-brief the Branch Chief one week before. June: POM submission window. Budget narratives for any manpower or training funding requests must be finalized and submitted through the PP&O Comptroller. September: OccField Symposium. Planning starts at T-6 months (March), with invitations out by May and logistics locked by July. Additionally, the T/O Review Board meets quarterly (Jan, Apr, Jul, Oct) with submission deadlines six weeks prior. The MOS Manual annual review cycle runs October through February with the updated manual published in March. Finally, the Commandant's Planning Guidance and Force Design updates may generate ad-hoc taskings at any time -- these are unpredictable but always high priority.",
+      "respondedAt": "2026-04-01T11:45:00Z"
+    },
+    {
+      "id": "n_tpl_009",
+      "promptId": "p09",
+      "prompt": "What systems, tools, or accounts does this billet require access to? Are there any pending access requests?",
+      "response": "You need access to the following systems, and several have long lead times so start the access requests on day one. TFDW (Total Force Data Warehouse) is your primary data source -- access request goes through DMDC and takes 2-3 weeks. MCTFS (Marine Corps Total Force System) for individual Marine records -- CAC-enabled access but you need a role request through M&RA that takes 1-2 weeks. The PP&O SharePoint site has all templates, trackers, and branch SOPs -- your Branch Chief can grant access immediately. The TECOM Information Management System (TECMIS) provides school seat and training pipeline data -- request through TECOM G-6 and expect 3-4 weeks. You also need to be added to several Outlook distribution lists: PP&O-POF-All, OccField-Managers, and the 06XX-Community list. Request through the Branch admin. Finally, request a SIPR token and SIPR email account if you do not already have one -- some joint billet coordination requires classified communication. The SIPR request takes 4-6 weeks and is the longest lead item.",
+      "respondedAt": "2026-04-01T12:00:00Z"
+    },
+    {
+      "id": "n_tpl_010",
+      "promptId": "p10",
+      "prompt": "What would you do differently if you were starting this billet over again? What advice would you give your successor?",
+      "response": "I would spend my entire first two weeks doing nothing but building relationships. I dove straight into the data and processes when I arrived, and it took me three months to realize that this billet runs on relationships, not spreadsheets. Go visit the M&RA monitor in person during week one -- do not email, do not call, walk over to their building and introduce yourself. Fly to Twentynine Palms in the first month to meet the schoolhouse leadership face-to-face. Call the MEF G-3 comm planners and introduce yourself. These relationships are the foundation of everything you will do. Second, I would set up my data pull routine immediately and automate as much as possible. I wasted weeks early on manually pulling the same reports. Third, attend every DirOps brief you can in the first month, even if your OccField is not on the agenda. You need to understand DirOps's priorities and communication style before you brief them yourself. Fourth, read every symposium after-action report from the last three years. The institutional history is invaluable and keeps you from re-litigating settled issues.",
+      "respondedAt": "2026-04-01T12:15:00Z"
+    },
+    {
+      "id": "n_tpl_011",
+      "promptId": "p11",
+      "prompt": "Are there any political dynamics, sensitivities, or relationship nuances that your successor should be aware of?",
+      "response": "The single biggest political dynamic is the tension between PP&O and M&RA on fill priorities. PP&O sets force structure requirements, M&RA executes assignments, and the two organizations do not always agree on priorities. When there are not enough Marines to fill every billet, PP&O wants critical billets filled first while M&RA balances assignment feasibility, PCS costs, and Marine preferences. You will find yourself in the middle of this tension constantly. Always maintain credibility with both sides by using data, not opinions. Within PP&O, the different OccField managers sometimes compete for DirOps attention and resources. Do not get drawn into turf battles -- focus on your field's data and let the numbers speak. Externally, the MEFs each believe their requirements should be prioritized over the others. Be scrupulously even-handed in how you distribute school seats and respond to billet requests. If a MEF CG calls the DC PP&O to complain that you are favoring another MEF, you have a serious problem. Finally, TECOM is sensitive about being told how to run their schoolhouses. Frame everything as a request for partnership, not a directive.",
+      "respondedAt": "2026-04-01T12:30:00Z"
+    },
+    {
+      "id": "n_tpl_012",
+      "promptId": "p12",
+      "prompt": "What resources, references, or reading materials would you recommend for someone new to this billet?",
+      "response": "Start with MCO 1200.17 (MOS Manual) -- read the sections relevant to the 06XX field cover to cover. Then read the current Commandant's Planning Guidance and Force Design Annual Update for context on where the Marine Corps is heading, because that directly affects which MOSs grow, shrink, or transform. The PP&O OccField Manager Handbook on SharePoint is outdated but still useful for understanding the formal processes. Read the last three OccField symposium after-action reports archived on the shared drive -- these contain the community's own assessment of their problems and priorities. The M&RA Enlisted Assignments SOP explains how the monitor actually makes assignment decisions, which helps you understand their constraints. TECOM's Training and Education Master Plan gives you the institutional perspective on training pipeline management. For data analysis, the TFDW User Guide is essential. Finally, I keep a personal reference binder with annotated copies of every MOS Manual change I processed, every DirOps brief I gave, and every significant staffing action. It is in the file cabinet behind the desk and I recommend your successor continue maintaining it.",
+      "respondedAt": "2026-04-01T12:45:00Z"
+    },
+    {
+      "id": "n_tpl_013",
+      "promptId": "mos-health",
+      "prompt": "What are the key health indicators for your occupational field, and which ones are you most concerned about?",
+      "response": "The key health indicators I track are fill rate by MOS and grade, first-term retention rate, lateral move rates in and out, school seat utilization and attrition, and time-to-train for each MOS-producing course. Right now my biggest concern is the 0612 Field Wireman community, which is 30% under quota on school seats this fiscal year due to a gapped instructor billet at MCCES. If we do not fix this in the next 60 days, the FY27 inventory projection shows the MOS dropping below 80% fill at the E-4/E-5 level, which triggers a manning crisis across the MEFs. Second concern is the post-merger health of 0671 after absorbing 0621 and 0623 Marines. The consolidation is on paper but the retraining pipeline is just starting, and early attrition data from the bridge course is higher than projected at 18% versus the 10% we planned for. Third, 0699 is overmanned at the SNCO level by about 15%, which creates a promotion bottleneck that is starting to affect retention at the Sergeant level as Marines see limited upward mobility.",
+      "respondedAt": "2026-04-01T13:00:00Z"
+    },
+    {
+      "id": "n_tpl_014",
+      "promptId": "monitor-relationship",
+      "prompt": "How does the relationship with the monitor work, and what does the next person need to know about that dynamic?",
+      "response": "The monitor relationship is the single most important professional relationship in this billet. The current 06XX monitor at MPP-40 is a GySgt with 14 years in the field who knows the community deeply. We have a standing Tuesday morning call at 0900 where we review the week's assignment actions, discuss any problem fills, and align on priority billets. The dynamic works well when both sides share information freely -- I give the monitor advance notice of pending billet changes or MOS Manual updates that will affect assignments, and the monitor gives me early warning on Marines who are being flagged for separation, pending legal holds, or unusual assignment requests. The key friction point is when PP&O and M&RA disagree on fill priorities. In those cases, the monitor and I have an informal agreement to present a joint recommendation rather than contradicting each other at the staff level. Never go around the monitor to their leadership -- if you have a disagreement, resolve it at the working level or escalate through your own chain. If a new monitor rotates in, invest heavily in the first month to establish the same rhythm.",
+      "respondedAt": "2026-04-01T13:15:00Z"
+    },
+    {
+      "id": "n_tpl_015",
+      "promptId": "to-management",
+      "prompt": "Walk through how T/O changes and billet management actually work in practice.",
+      "response": "On paper, the process is clean: a unit submits a T/O Change Request through their chain of command, it routes to M&RA, then to PP&O for OccField manager concurrence, then to the T/O Review Board. In practice, it is messier. About half of the TOCRs I see are incomplete -- missing justification, wrong T/O line numbers, or no endorsement from the intermediate command. I send these back immediately with a checklist of what is needed rather than trying to fix them myself. For the ones that are complete, I run my analysis in about a week: check current fill rates for the requested MOS and grade, look at the cumulative impact of all pending TOCRs for that MOS, and coordinate with the monitor on assignment feasibility. My concurrence or non-concurrence memo goes through the Branch Chief who usually approves within two days. The real bottleneck is the T/O Review Board, which meets quarterly. Miss the submission deadline by even one day and your TOCR waits until the next quarter. The informal reality is that about 30% of billet changes originate not from the formal TOCR process but from force structure reviews directed by higher headquarters, which bypass the normal timeline entirely.",
+      "respondedAt": "2026-04-01T13:30:00Z"
+    },
+    {
+      "id": "n_tpl_016",
+      "promptId": "school-seats",
+      "prompt": "How does school seat allocation and training pipeline coordination work for your field?",
+      "response": "School seat allocation for the 06XX field runs through TECOM with significant input from this billet. Each fiscal year I submit projected requirements through the Training Input Plan, which is due in March. I base my numbers on current inventory, projected losses from EAS and lateral moves, and any pending billet changes that would increase or decrease demand. TECOM takes my input, cross-references it with schoolhouse capacity constraints -- primarily instructor availability and facility throughput -- and publishes the annual quota. The quotas are then allocated across the MEFs and supporting establishment by M&RA based on unit priority. In practice, the biggest issue is not the total number of seats but instructor staffing at MCCES. When instructor billets are gapped, class sizes shrink and the pipeline contracts regardless of demand. I monitor instructor fill rates monthly through the MCCES Director. The other recurring issue is course attrition. When attrition exceeds 15%, I coordinate with the schoolhouse to understand whether it is a screening issue, a curriculum problem, or a quality-of-instruction issue. Mid-year seat adjustments happen about twice a year and always require quick-turn coordination between me, TECOM, and M&RA.",
+      "respondedAt": "2026-04-01T13:45:00Z"
+    },
+    {
+      "id": "n_tpl_017",
+      "promptId": "career-path",
+      "prompt": "What career path concerns exist within this occupational field that you've been working on?",
+      "response": "Three career path issues are active. First, the 0671 merger created uncertainty about promotion timelines for the absorbed 0621 and 0623 Marines. I worked with M&RA to ensure that time-in-grade credit transfers cleanly and that promotion board precepts reflect the merger, but individual Marines are still confused and the community needs better communication. I am drafting a MARADMIN with the monitor to clarify the transition timeline. Second, there is a promotion bottleneck at the SSgt-to-GySgt level in 0699 because the field is overmanned at the senior grades relative to billets. I recommended a targeted SNCO lateral move incentive at the last symposium, which got mixed reception, but the data supports it. Third, career-enhancing billets are not evenly distributed across the force. Marines stationed at supporting establishment units have fewer opportunities for key billets compared to those at MEF headquarters or the schoolhouse. I am working on updating the MOS Roadmap to identify equivalent career-enhancing billets outside the operating forces so career planners and monitors can make better assignment recommendations for Marines at MCICOM and other supporting commands."
+    }
+  ],
+  "startHere": ["tpl_001", "tpl_008", "tpl_012", "tpl_018", "tpl_024", "tpl_029"],
   "entries": [
     {
       "id": "tpl_001",
