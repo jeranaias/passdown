@@ -58,7 +58,7 @@ const STEPS = [
     label: 'Key Processes',
     category: 'process',
     icon: '\u{1F4CB}',
-    prompt: "Now let's capture your core processes. Think about the 3-5 most important procedures you perform regularly. What are the things that, if your successor didn't know how to do them, would cause the most disruption?",
+    prompt: "What are the 3-5 procedures you do regularly that would disrupt operations if your successor didn't know them? Think about what breaks if you're gone for a week.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "process" category. For each distinct process mentioned, create a separate entry with step-by-step instructions, key contacts (by billet title only, no personal names), common pitfalls, and any relevant timelines.
 
 Return ONLY a JSON array where each object has:
@@ -78,7 +78,7 @@ Return ONLY the JSON array, no other text.`,
     label: 'Stakeholders',
     category: 'stakeholder',
     icon: '\u{1F465}',
-    prompt: "Who are the key people and offices you interact with? Think about your chain of command, adjacent offices, external liaisons, and anyone your successor needs to know about. Use billet titles, not personal names.",
+    prompt: "List the 5 people/offices you coordinate with most. Use billet titles, not personal names. For each, note how often you interact and what you coordinate on.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "stakeholder" category. For each person/office mentioned, create a separate entry.
 
 Return ONLY a JSON array where each object has:
@@ -99,7 +99,7 @@ Return ONLY the JSON array, no other text.`,
     label: 'Calendar Events',
     category: 'calendar',
     icon: '\u{1F4C5}',
-    prompt: "What are the major recurring deadlines and events in your annual cycle? Think about reporting deadlines, inspections, training events, budget cycles, and anything your successor needs to have on their calendar from day one.",
+    prompt: "What are the major recurring deadlines in your annual cycle? Think: budget submissions, quarterly reports, inspection cycles, conference schedules. Include when preparation needs to start.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "calendar" category. For each recurring event or deadline mentioned, create a separate entry with timing, preparation requirements, and key details.
 
 Return ONLY a JSON array where each object has:
@@ -120,7 +120,7 @@ Return ONLY the JSON array, no other text.`,
     label: 'Key Decisions',
     category: 'decision',
     icon: '\u{2696}',
-    prompt: "What are the 2-3 most important decisions you've made that your successor needs to understand? Include not just what you decided, but WHY, what alternatives you considered, and what the outcome was.",
+    prompt: "What are the 2-3 most important decisions you've made that your successor needs to understand the rationale for? Include what alternatives you considered.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "decision" category. For each decision mentioned, create a detailed entry explaining the context, alternatives considered, rationale, and outcome.
 
 Return ONLY a JSON array where each object has:
@@ -138,10 +138,10 @@ Return ONLY the JSON array, no other text.`,
   },
   {
     id: 'lessons',
-    label: 'Lessons & Gotchas',
+    label: 'Lessons Learned',
     category: 'lesson',
     icon: '\u{1F4A1}',
-    prompt: "What are the things you wish someone had told you on day one? The unwritten rules, the gotchas, the tribal knowledge that isn't in any SOP. These are often the most valuable entries in a turnover.",
+    prompt: "What do you wish someone had told you on day one? What mistakes should your successor avoid? Think about unwritten rules, tribal knowledge, and institutional gotchas.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "lesson" category. Each lesson should be specific, actionable, and capture institutional knowledge that isn't written down anywhere.
 
 Return ONLY a JSON array where each object has:
@@ -161,7 +161,7 @@ Return ONLY the JSON array, no other text.`,
     label: 'Active Issues',
     category: 'issue',
     icon: '\u{1F6A8}',
-    prompt: "What's currently on fire or in progress that needs continuity? Open problems, ongoing projects, things that are broken but being worked. Your successor needs to pick these up without dropping anything.",
+    prompt: "What's currently in progress, unresolved, or on fire that needs immediate attention? Include anything with a deadline in the next 90 days.",
     aiPrompt: (text) => `Based on the user's description below, create knowledge base entries for the "issue" category. Each issue should capture the current status, what's been tried, who's involved, and what needs to happen next.
 
 Return ONLY a JSON array where each object has:

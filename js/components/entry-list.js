@@ -680,12 +680,17 @@ export default function EntryList() {
             icon=${html`<${IconFolder} size=${48} />`}
             title=${entries.length === 0 ? 'No entries yet.' : 'No entries match your filters.'}
             description=${entries.length === 0
-              ? 'Start capturing knowledge!'
+              ? 'Your knowledge base is empty. Capture processes, stakeholders, decisions, and more to build your turnover package.'
               : 'Try adjusting your search or filters.'}
             action=${entries.length === 0
-              ? html`<${Button} variant="primary" size="sm" onClick=${() => navigate('capture')}>
-                  <${IconPlus} size=${16} /> Add Entry
-                <//>`
+              ? html`<div class="flex flex-wrap justify-center gap-3">
+                  <${Button} variant="primary" size="sm" onClick=${() => navigate('guided')}>
+                    Start Guided Setup
+                  <//>
+                  <${Button} variant="secondary" size="sm" onClick=${() => navigate('capture')}>
+                    <${IconPlus} size=${16} /> Add Entry
+                  <//>
+                </div>`
               : activeFilterCount > 0
                 ? html`<${Button} variant="secondary" size="sm" onClick=${clearAllFilters}>
                     Clear Filters

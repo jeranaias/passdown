@@ -117,6 +117,7 @@ function ExportSection() {
           title="Export in Operational Language Framework format for enterprise registry integration."
         >${IconExternalLink({ size: 16 })} Export OLF Format<//>
       </div>
+      <p class="text-xs text-amber-600 mt-2">Review all entries for OPSEC compliance before sharing exports.</p>
       <div class="flex flex-wrap gap-6 text-xs text-slate-500">
         ${lastExport && html`<span>Last export: ${formatDate(lastExport)}</span>`}
         <span>Storage used: ${formatBytes(storageSize)} of ~5 MB</span>

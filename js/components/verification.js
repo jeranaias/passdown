@@ -254,7 +254,8 @@ export default function Verification() {
         <${EmptyState}
           icon=${IconEye({ size: 48 })}
           title="No entries to verify"
-          description="Add entries to your knowledge base first, then use this panel to track verification status."
+          description="Verification keeps your knowledge current. Add entries to your knowledge base first, then use this panel to track whether information stays accurate over time."
+          action=${html`<${Button} onClick=${() => navigate('guided')}>Start Guided Setup<//>`}
         />
       </div>
     `;
@@ -265,6 +266,20 @@ export default function Verification() {
       <h1 class="text-2xl font-bold text-navy-900 flex items-center gap-2">
         ${IconEye({ size: 24 })} Verification
       </h1>
+
+      <!-- How Verification Works -->
+      <details class="bg-blue-50 border border-blue-200 rounded-lg">
+        <summary class="px-4 py-2.5 text-sm font-medium text-blue-800 cursor-pointer hover:bg-blue-100/50 rounded-lg">
+          How Verification Works
+        </summary>
+        <div class="px-4 pb-3 text-sm text-blue-700 leading-relaxed border-t border-blue-200 pt-2 space-y-1">
+          <p>Verification keeps your knowledge current. Entries expire after <strong>90 days</strong> by default.</p>
+          <p><strong class="text-green-700">Green (Current)</strong> = Recently verified and accurate.</p>
+          <p><strong class="text-amber-700">Yellow (Expiring)</strong> = Due for verification within 30 days.</p>
+          <p><strong class="text-red-700">Red (Stale)</strong> = Past due — needs review and re-verification.</p>
+          <p>Click "Verify" on entries that are still accurate, or "Flag" entries that need updates.</p>
+        </div>
+      </details>
 
       <!-- Summary Stats + AI Review Button -->
       <div class="flex items-start gap-3 flex-wrap">

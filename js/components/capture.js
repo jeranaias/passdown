@@ -183,6 +183,10 @@ export default function Capture() {
 
   const [dirty, setDirty] = useState(false);
 
+  // ─── Post-save success state ──────────────────────────────────────────────
+
+  const [showSuccess, setShowSuccess] = useState(false);
+
   useEffect(() => {
     const handler = (e) => {
       if (dirty) {
@@ -284,13 +288,14 @@ export default function Capture() {
     if (isEdit) {
       updateEntry(entryId, entryData);
       showToast('Entry updated.', 'success');
+      setDirty(false);
+      navigate('browse');
     } else {
       addEntry(entryData);
       // addEntry already shows its own toast
+      setDirty(false);
+      setShowSuccess(true);
     }
-
-    setDirty(false);
-    navigate('browse');
   }, [category, title, content, tags, priority, essentialReading, meta, isEdit, entryId, addEntry, updateEntry, navigate, validate]);
 
   // ─── Delete ───────────────────────────────────────────────────────────────
@@ -316,6 +321,27 @@ export default function Capture() {
         <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-8 text-center">
           <p class="text-slate-500 mb-4">Entry not found.</p>
           <${Button} onClick=${handleCancel}>Back to List<//>
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Post-save success card ────────────────────────────────────────────────
+
+  if (showSuccess) {
+    return html`
+      <div class="max-w-3xl mx-auto px-4 py-12">
+        <div class="bg-white rounded-xl border border-green-200 p-8 text-center space-y-4">
+          <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="text-xl font-bold text-navy-900">Entry Created</h2>
+          <p class="text-sm text-slate-600">Your knowledge has been captured and saved.</p>
+          <div class="flex flex-wrap justify-center gap-3 pt-2">
+            <${Button} onClick=${() => { setShowSuccess(false); setTitle(''); setContent(''); setTags([]); setTagInput(''); setPriority('medium'); setEssentialReading(false); setMeta(defaultMeta(category)); setErrors({}); }}>Add Another Entry<//>
+            <${Button} variant="secondary" onClick=${() => navigate('browse')}>View in Browse<//>
+            <${Button} variant="secondary" onClick=${() => navigate('guided')}>Back to Guided Setup<//>
+          </div>
         </div>
       </div>
     `;
@@ -352,6 +378,20 @@ export default function Capture() {
         <${Button} variant="ghost" onClick=${handleCancel} size="sm">
           Cancel
         <//>
+      </div>
+
+      <!-- Category Progress Strip -->
+      <div class="bg-slate-50 rounded-lg border border-slate-200 p-3 mb-4">
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          ${CATEGORIES.map(cat => {
+            const count = entries.filter(e => e.category === cat.id).length;
+            return html`
+              <span key=${cat.id} class=${count === 0 ? 'text-red-500 font-medium' : 'text-slate-600'}>
+                ${cat.label}: ${count}
+              </span>
+            `;
+          })}
+        </div>
       </div>
 
       <!-- Category Tabs -->
@@ -568,6 +608,9 @@ export default function Capture() {
         onAddTag=${(tag) => { if (!tags.includes(tag)) setTags(prev => [...prev, tag]); }}
         onSetContent=${setContent}
       />
+
+      <!-- OPSEC Reminder -->
+      <p class="text-xs text-slate-400 mb-3">Use billet titles, not personal names. Review for OPSEC before sharing.</p>
 
       <!-- Action Buttons -->
       <div class="flex items-center justify-between">

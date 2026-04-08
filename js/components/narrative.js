@@ -14,18 +14,18 @@ const { useState, useEffect, useCallback, useMemo, useRef } = React;
 // ─── Default Prompts (inline fallback) ───────────────────────────────────────
 
 const DEFAULT_PROMPTS = [
-  { id: 'p01', question: 'What is the primary mission of your billet, and how does it contribute to your unit\'s overall mission?', guidance: 'Think about the core purpose of your position. What would fail or degrade if this billet were vacant for 30 days?' },
-  { id: 'p02', question: 'Describe a typical week in this billet. What are the recurring meetings, deadlines, and touchpoints?', guidance: 'Walk through Monday to Friday. What happens every week without fail?' },
-  { id: 'p03', question: 'Who are the three to five people or offices you interact with most frequently?', guidance: 'Include both internal and external contacts. Note what you work with them on.' },
-  { id: 'p04', question: 'What are the most important processes or SOPs you manage or execute?', guidance: 'Consider both formal written SOPs and informal processes. Note file locations and system names.' },
-  { id: 'p05', question: 'What are the biggest gotchas or lessons learned that a new person needs to know immediately?', guidance: 'Think about mistakes you made early on, things that surprised you, or unwritten institutional knowledge.' },
-  { id: 'p06', question: 'What decisions have you made that your successor should understand the reasoning behind?', guidance: 'Focus on choices where the "why" matters as much as the "what." Include constraints and tradeoffs.' },
-  { id: 'p07', question: 'What are the active issues or ongoing projects that need immediate attention?', guidance: 'Include anything with a deadline in the next 90 days, unresolved problems, or initiatives in progress.' },
-  { id: 'p08', question: 'What annual or periodic events does this billet manage or participate in?', guidance: 'Think through the fiscal year and training cycle. Include inspections, exercises, reports, ceremonies.' },
-  { id: 'p09', question: 'What systems, tools, or accounts does this billet require access to?', guidance: 'List all IT systems, databases, shared drives, distribution lists, and physical access requirements.' },
-  { id: 'p10', question: 'What would you do differently if you were starting this billet over again?', guidance: 'This is your chance to share wisdom. What do you wish someone had told you on Day 1?' },
-  { id: 'p11', question: 'Are there any political dynamics, sensitivities, or relationship nuances to be aware of?', guidance: 'Think about inter-unit relationships, personality dynamics, or topics requiring careful handling.' },
-  { id: 'p12', question: 'What resources, references, or reading materials would you recommend?', guidance: 'Include orders, directives, regulations, websites, manuals, or informal reference documents.' },
+  { id: 'p01', question: 'What is the primary mission of your billet, and how does it contribute to your unit\'s overall mission?', guidance: 'Think about the core purpose of your position. What would fail or degrade if this billet were vacant for 30 days? Aim for 100-200 words.' },
+  { id: 'p02', question: 'Describe a typical week in this billet. What are the recurring meetings, deadlines, and touchpoints?', guidance: 'Walk through Monday to Friday. What happens every week without fail? Aim for 200-300 words.' },
+  { id: 'p03', question: 'Who are the three to five people or offices you interact with most frequently?', guidance: 'Include both internal and external contacts. Note what you work with them on. Aim for 200-300 words.' },
+  { id: 'p04', question: 'What are the most important processes or SOPs you manage or execute?', guidance: 'Consider both formal written SOPs and informal processes. Note file locations and system names. Aim for 100-200 words.' },
+  { id: 'p05', question: 'What are the biggest gotchas or lessons learned that a new person needs to know immediately?', guidance: 'Think about mistakes you made early on, things that surprised you, or unwritten institutional knowledge. Aim for 100-200 words.' },
+  { id: 'p06', question: 'What decisions have you made that your successor should understand the reasoning behind?', guidance: 'Focus on choices where the "why" matters as much as the "what." Include constraints and tradeoffs. Aim for 100-200 words.' },
+  { id: 'p07', question: 'What are the active issues or ongoing projects that need immediate attention?', guidance: 'Include anything with a deadline in the next 90 days, unresolved problems, or initiatives in progress. Aim for 100-200 words.' },
+  { id: 'p08', question: 'What annual or periodic events does this billet manage or participate in?', guidance: 'Think through the fiscal year and training cycle. Include inspections, exercises, reports, ceremonies. Aim for 100-200 words.' },
+  { id: 'p09', question: 'What systems, tools, or accounts does this billet require access to?', guidance: 'List all IT systems, databases, shared drives, distribution lists, and physical access requirements. Aim for 100-200 words.' },
+  { id: 'p10', question: 'What would you do differently if you were starting this billet over again?', guidance: 'This is your chance to share wisdom. What do you wish someone had told you on Day 1? Aim for 100-200 words.' },
+  { id: 'p11', question: 'Are there any political dynamics, sensitivities, or relationship nuances to be aware of?', guidance: 'Think about inter-unit relationships, personality dynamics, or topics requiring careful handling. Aim for 100-200 words.' },
+  { id: 'p12', question: 'What resources, references, or reading materials would you recommend?', guidance: 'Include orders, directives, regulations, websites, manuals, or informal reference documents. Aim for 100-200 words.' },
 ];
 
 // ─── Tab Bar ─────────────────────────────────────────────────────────────────

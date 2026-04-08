@@ -141,8 +141,11 @@ export default function StakeholderMap() {
         <${EmptyState}
           icon=${IconUsers({ size: 48 })}
           title="No stakeholders yet"
-          description="Build your stakeholder map by adding the people and offices you work with most."
-          action=${html`<${Button} onClick=${handleAdd}>${IconPlus({ size: 16 })} Add Stakeholder<//>`}
+          description="Track the people and offices you coordinate with most. Use Guided Setup to quickly populate your stakeholder map, or add contacts manually."
+          action=${html`<div class="flex flex-wrap justify-center gap-3">
+            <${Button} onClick=${() => navigate('guided')}>Guided Setup<//>
+            <${Button} variant="secondary" onClick=${handleAdd}>${IconPlus({ size: 16 })} Add Stakeholder<//>
+          </div>`}
         />
       </div>
     `;

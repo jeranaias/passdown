@@ -69,7 +69,7 @@ function SettingsIcon(props) {
 }
 
 function BrowseIcon(props) {
-  const { size = 16, className = '' } = props || {};
+  const { size = 18, className = '' } = props || {};
   return html`
     <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
       viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -84,7 +84,7 @@ function BrowseIcon(props) {
 }
 
 function CaptureIcon(props) {
-  const { size = 16, className = '' } = props || {};
+  const { size = 18, className = '' } = props || {};
   return html`
     <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
       viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -253,7 +253,10 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
       </div>
 
       <!-- Navigation -->
-      <nav role="navigation" class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav role="navigation" class="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+
+        <!-- BUILD group -->
+        <p class="px-3 pt-3 pb-1 text-[9px] font-bold uppercase tracking-wider text-navy-500">Build</p>
 
         <!-- Guided Setup (featured) -->
         <button
@@ -269,36 +272,30 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
         </button>
 
         <${NavItem}
+          icon=${CaptureIcon()}
+          label="Capture"
+          hash="capture"
+          active=${activeHash === 'capture'}
+          onClick=${() => handleNav('capture')}
+        />
+        <${NavItem}
+          icon=${BrowseIcon()}
+          label="Browse"
+          hash="browse"
+          active=${activeHash === 'browse'}
+          onClick=${() => handleNav('browse')}
+        />
+
+        <!-- ORGANIZE group -->
+        <p class="px-3 pt-3 pb-1 text-[9px] font-bold uppercase tracking-wider text-navy-500">Organize</p>
+
+        <${NavItem}
           icon=${HomeIcon()}
           label="Dashboard"
           hash="dashboard"
           active=${activeHash === 'dashboard'}
           onClick=${() => handleNav('dashboard')}
         />
-
-        <${NavGroup}
-          icon=${IconFolder({ size: 18 })}
-          label="Knowledge Base"
-          activeHash=${activeHash}
-        >
-          <${NavItem}
-            icon=${CaptureIcon()}
-            label="Capture"
-            hash="capture"
-            active=${activeHash === 'capture'}
-            onClick=${() => handleNav('capture')}
-            indent
-          />
-          <${NavItem}
-            icon=${BrowseIcon()}
-            label="Browse"
-            hash="browse"
-            active=${activeHash === 'browse'}
-            onClick=${() => handleNav('browse')}
-            indent
-          />
-        <//>
-
         <${NavItem}
           icon=${IconUsers({ size: 18 })}
           label="Stakeholders"
@@ -306,7 +303,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           active=${activeHash === 'capture/stakeholders'}
           onClick=${() => handleNav('capture/stakeholders')}
         />
-
         <${NavItem}
           icon=${IconCalendar({ size: 18 })}
           label="Calendar"
@@ -314,7 +310,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           active=${activeHash === 'capture/calendar'}
           onClick=${() => handleNav('capture/calendar')}
         />
-
         <${NavItem}
           icon=${IconChat({ size: 18 })}
           label="Narratives"
@@ -323,6 +318,9 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           onClick=${() => handleNav('narrative')}
         />
 
+        <!-- REVIEW group -->
+        <p class="px-3 pt-3 pb-1 text-[9px] font-bold uppercase tracking-wider text-navy-500">Review</p>
+
         <${NavItem}
           icon=${IconSearch({ size: 18 })}
           label="Search"
@@ -330,7 +328,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           active=${activeHash === 'search'}
           onClick=${() => handleNav('search')}
         />
-
         <${NavItem}
           icon=${IconCheck({ size: 18 })}
           label="Verification"
@@ -338,7 +335,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           active=${activeHash === 'verify'}
           onClick=${() => handleNav('verify')}
         />
-
         <${NavItem}
           icon=${CheckSquareIcon()}
           label="Checklist"
@@ -346,7 +342,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           active=${activeHash === 'checklist'}
           onClick=${() => handleNav('checklist')}
         />
-
         <${NavItem}
           icon=${IconStar({ size: 18 })}
           label="Start Here"
@@ -355,7 +350,9 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           onClick=${() => handleNav('start-here')}
         />
 
-        <div class="pt-3 mt-3 border-t border-navy-700/50">
+        <!-- SHARE group -->
+        <div class="pt-2 mt-2 border-t border-navy-700/30">
+          <p class="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-navy-500">Share</p>
           <${NavItem}
             icon=${IconDownload({ size: 18 })}
             label="Export/Import"
@@ -363,7 +360,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
             active=${activeHash === 'export'}
             onClick=${() => handleNav('export')}
           />
-
           <${NavItem}
             icon=${FederationIcon()}
             label="Federation"
@@ -371,7 +367,6 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
             active=${activeHash === 'federation'}
             onClick=${() => handleNav('federation')}
           />
-
           <${NavItem}
             icon=${BarChartIcon()}
             label="Readiness Report"
@@ -379,7 +374,10 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
             active=${activeHash === 'analytics'}
             onClick=${() => handleNav('analytics')}
           />
+        </div>
 
+        <!-- SYSTEM -->
+        <div class="pt-2 mt-2 border-t border-navy-700/30">
           <${NavItem}
             icon=${SettingsIcon()}
             label="Settings"
@@ -512,6 +510,85 @@ function RouteView({ hash }) {
   return Component ? html`<${Component} />` : null;
 }
 
+// --- Welcome Modal (First-Time Experience) ------------------------------------
+
+function WelcomeModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+
+  const handleAction = useCallback((action) => {
+    onClose();
+    if (action === 'guided') navigate('guided');
+    else if (action === 'template') navigate('export');
+  }, [onClose]);
+
+  return html`
+    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div class="fixed inset-0 bg-black/50" onClick=${() => handleAction('skip')} />
+      <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 space-y-6 z-10">
+        <!-- Shield Icon -->
+        <div class="flex justify-center">
+          <div class="w-16 h-16 rounded-2xl bg-navy-50 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+              class="text-navy-600">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <polyline points="9 12 11 14 15 10" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="text-center">
+          <h2 class="text-xl font-bold text-navy-900">Welcome to Passdown</h2>
+          <p class="text-sm text-slate-500 mt-1">Build your turnover package in 3 steps</p>
+        </div>
+
+        <!-- Steps -->
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-navy-100 text-navy-700 text-sm font-bold flex items-center justify-center">1</span>
+            <div>
+              <p class="text-sm font-medium text-slate-800">Set up your billet</p>
+              <p class="text-xs text-slate-500">Name, unit, turnover date</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-navy-100 text-navy-700 text-sm font-bold flex items-center justify-center">2</span>
+            <div>
+              <p class="text-sm font-medium text-slate-800">Use Guided Setup or load a template</p>
+              <p class="text-xs text-slate-500">Populate your knowledge base quickly</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-navy-100 text-navy-700 text-sm font-bold flex items-center justify-center">3</span>
+            <div>
+              <p class="text-sm font-medium text-slate-800">Review, verify, and export</p>
+              <p class="text-xs text-slate-500">Ensure completeness before handoff</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="space-y-2">
+          <button
+            onClick=${() => handleAction('guided')}
+            class="w-full px-4 py-2.5 text-sm font-medium text-white bg-navy-700 hover:bg-navy-800 rounded-lg transition-colors"
+          >Start Guided Setup</button>
+          <button
+            onClick=${() => handleAction('template')}
+            class="w-full px-4 py-2.5 text-sm font-medium text-navy-700 bg-navy-50 hover:bg-navy-100 rounded-lg transition-colors border border-navy-200"
+          >Load a Template</button>
+          <button
+            onClick=${() => handleAction('skip')}
+            class="w-full px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+          >Skip</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // --- App Component ------------------------------------------------------------
 
 export default function App() {
@@ -527,6 +604,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [aiChatOpen, setAiChatOpen]     = useState(false);
   const [showInstall, setShowInstall]   = useState(false);
+  const [showWelcome, setShowWelcome]   = useState(false);
 
   const toastId = useRef(0);
 
@@ -555,6 +633,11 @@ export default function App() {
     // Check WebGPU availability for offline AI
     if (WebLLMService.isSupported()) {
       console.log('[App] WebGPU available for offline AI');
+    }
+
+    // Show welcome modal for first-time users
+    if (!data.billet?.title && !localStorage.getItem('passdown_welcome_dismissed')) {
+      setShowWelcome(true);
     }
   }, []);
 
@@ -761,9 +844,17 @@ export default function App() {
         </div>
       </div>
 
+      <${WelcomeModal}
+        isOpen=${showWelcome}
+        onClose=${() => {
+          setShowWelcome(false);
+          localStorage.setItem('passdown_welcome_dismissed', 'true');
+        }}
+      />
+
       <button
         onClick=${() => setAiChatOpen(true)}
-        className="fixed bottom-10 right-6 w-14 h-14 bg-navy-700 hover:bg-navy-600 text-white rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-105 z-40 no-print"
+        class="fixed bottom-10 right-6 w-14 h-14 bg-navy-700 hover:bg-navy-600 text-white rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-105 z-40 no-print"
         aria-label="Open AI Assistant"
         title="AI Assistant (Ctrl+K)"
       >

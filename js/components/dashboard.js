@@ -6,7 +6,7 @@ import { AppContext, navigate } from './app.js';
 import { Button, Badge, Card, ProgressBar, showToast } from '../shared/ui.js';
 import { ICON_MAP, IconWarning, IconCheck, IconClock, IconStar } from '../shared/icons.js';
 
-const { useContext, useMemo, useState, useCallback } = React;
+const { useContext, useMemo, useState, useCallback, useEffect } = React;
 
 // --- Helpers ------------------------------------------------------------------
 
@@ -606,6 +606,44 @@ function QuickActions() {
   `;
 }
 
+// --- TemplateCards (shown when KB is empty) ------------------------------------
+
+function TemplateCards() {
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    fetch('./data/templates/index.json')
+      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(data => {
+        const index = data && Array.isArray(data.templates) ? data.templates : (Array.isArray(data) ? data : []);
+        setTemplates(index);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (templates.length === 0) return null;
+
+  return html`
+    <div>
+      <h3 class="text-sm font-semibold text-slate-700 mb-3">Start from a template:</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        ${templates.map(tpl => html`
+          <div key=${tpl.id} class="bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div>
+              <p class="text-sm font-medium text-navy-900">${tpl.name}</p>
+              <p class="text-xs text-slate-500 mt-1">${tpl.entryCount || tpl.entries?.length || '?'} entries</p>
+            </div>
+            <button
+              onClick=${() => navigate('export')}
+              class="mt-3 text-xs font-medium text-navy-600 hover:text-navy-800 transition-colors text-left"
+            >Load</button>
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+}
+
 // --- Dashboard (default export) -----------------------------------------------
 
 export default function Dashboard() {
@@ -626,8 +664,8 @@ export default function Dashboard() {
       <!-- PCS Timeline -->
       <${PCSTimeline} billet=${billet} entries=${entries} />
 
-      <!-- AI Quick Start (when KB is mostly empty and AI model is loaded) -->
-      ${entries.length < 3 && WebLLMService.isAvailable() && html`
+      <!-- Get Started (when KB is mostly empty) -->
+      ${entries.length < 3 && html`
         <div class="bg-gradient-to-r from-navy-50 to-blue-50 border border-navy-200 rounded-xl p-6 space-y-3">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-navy-100 flex items-center justify-center">
@@ -636,27 +674,54 @@ export default function Dashboard() {
               </svg>
             </div>
             <div>
-              <h3 class="text-base font-semibold text-navy-900">AI Quick Start</h3>
-              <p class="text-sm text-navy-600">Let AI help you build your knowledge base</p>
+              <h3 class="text-base font-semibold text-navy-900">Get Started</h3>
+              <p class="text-sm text-navy-600">Your knowledge base is ${entries.length === 0 ? 'empty' : 'just getting started'}. Build your turnover package:</p>
             </div>
           </div>
-          <p class="text-sm text-slate-600">
-            Your knowledge base is ${entries.length === 0 ? 'empty' : 'just getting started'}.
-            Open the AI assistant and ask it to draft starter entries for your billet type.
-          </p>
-          <button
-            onClick=${() => {
-              window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: `Help me get started. Draft 5 starter entries for a ${billet?.title || 'military'} billet covering the most important processes, stakeholders, and calendar events.` } }));
-            }}
-            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-navy-700 hover:bg-navy-800 rounded-lg transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
-            </svg>
-            Generate Starter Entries with AI
-          </button>
+          <div class="flex flex-wrap gap-3">
+            <button
+              onClick=${() => navigate('guided')}
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-navy-700 hover:bg-navy-800 rounded-lg transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 4V2" /><path d="M15 16v-2" /><path d="M8 9h2" /><path d="M20 9h2" />
+                <path d="M17.8 11.8 20 14" /><path d="M15 7a3 3 0 0 0-3 3" />
+                <path d="M6.2 6.2 8 8" />
+                <path d="M2 22l4-11 5 5Z" /><path d="M7 16.5l-1.5 1.5" />
+              </svg>
+              Guided Setup
+            </button>
+            <button
+              onClick=${() => navigate('export')}
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-navy-700 bg-white hover:bg-navy-50 border border-navy-200 rounded-lg transition-colors"
+            >
+              Load Template
+            </button>
+            <button
+              onClick=${() => navigate('capture')}
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-navy-700 bg-white hover:bg-navy-50 border border-navy-200 rounded-lg transition-colors"
+            >
+              Add Entry
+            </button>
+            ${WebLLMService.isAvailable() && html`
+              <button
+                onClick=${() => {
+                  window.dispatchEvent(new CustomEvent('open-ai-chat', { detail: { query: 'Help me get started. Draft 5 starter entries for a ' + (billet?.title || 'military') + ' billet covering the most important processes, stakeholders, and calendar events.' } }));
+                }}
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+                </svg>
+                Generate with AI
+              </button>
+            `}
+          </div>
         </div>
       `}
+
+      <!-- Template Cards (empty KB) -->
+      ${entries.length === 0 && html`<${TemplateCards} />`}
 
       <!-- Quick Stats -->
       <${QuickStats}

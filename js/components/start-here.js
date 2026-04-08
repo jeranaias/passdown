@@ -185,7 +185,7 @@ export default function StartHere() {
         <${EmptyState}
           icon=${IconStar({ size: 48 })}
           title="No essential reading list created yet"
-          description="Flag entries as essential reading when capturing knowledge, or add them here to build a curated onboarding list for your successor."
+          description="Build a curated day-one reading list for your successor. The most critical entries should go here so the incoming person knows exactly where to start."
           action=${html`<${Button} onClick=${() => setPickerOpen(true)}>${IconPlus({ size: 16 })} Add to Start Here<//>`}
         />
         <${EntryPicker} isOpen=${pickerOpen} onClose=${() => setPickerOpen(false)}

@@ -288,7 +288,8 @@ export default function SearchPanel() {
                 <${EmptyState}
                   icon=${IconSearch({ size: 48 })}
                   title="No entries yet"
-                  description="Add entries to your knowledge base to search across them."
+                  description="Add entries to your knowledge base to search across them. Try Guided Setup for a fast start."
+                  action=${html`<${Button} onClick=${() => navigate('guided')}>Guided Setup<//>`}
                 />
               `;
             }

@@ -227,8 +227,11 @@ export default function CalendarView() {
         <${EmptyState}
           icon=${IconCalendar({ size: 48 })}
           title="No calendar events yet"
-          description="Add recurring events, inspections, exercises, and milestones to track the annual cycle."
-          action=${html`<${Button} onClick=${handleAdd}>${IconPlus({ size: 16 })} Add Event<//>`}
+          description="Map out recurring events, inspections, deadlines, and milestones across your annual cycle. Guided Setup walks you through the key dates."
+          action=${html`<div class="flex flex-wrap justify-center gap-3">
+            <${Button} onClick=${() => navigate('guided')}>Guided Setup<//>
+            <${Button} variant="secondary" onClick=${handleAdd}>${IconPlus({ size: 16 })} Add Event<//>
+          </div>`}
         />
       </div>
     `;

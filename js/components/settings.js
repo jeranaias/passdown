@@ -63,11 +63,13 @@ function BilletSetup() {
           <label class=${labelClass}>Billet Title</label>
           <input type="text" value=${form.title || ''} onChange=${e => update('title', e.target.value)}
             class=${inputClass} placeholder="e.g., S-3 Operations Officer" />
+          <p class="text-xs text-slate-400 mt-0.5">Your position title (e.g., "OccField Manager, 0602")</p>
         </div>
         <div>
           <label class=${labelClass}>Organization / Unit</label>
           <input type="text" value=${form.unit || ''} onChange=${e => update('unit', e.target.value)}
             class=${inputClass} placeholder="e.g., 1st Bn, 5th Marines" />
+          <p class="text-xs text-slate-400 mt-0.5">Your unit and command (e.g., "PP&O, HQMC")</p>
         </div>
       </div>
       <div>
@@ -75,17 +77,20 @@ function BilletSetup() {
         <textarea value=${form.billetDescription || ''} onChange=${e => update('billetDescription', e.target.value)}
           rows="3" class=${inputClass}
           placeholder="Brief description of the billet mission and primary responsibilities..." />
+        <p class="text-xs text-slate-400 mt-0.5">One paragraph describing your billet's core purpose</p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class=${labelClass}>Outgoing PCS / Turnover Date</label>
           <input type="date" value=${form.turnoverDate || ''} onChange=${e => update('turnoverDate', e.target.value)}
             class=${inputClass} />
+          <p class="text-xs text-slate-400 mt-0.5">Your PCS/departure date — used to calculate readiness timeline</p>
         </div>
         <div>
           <label class=${labelClass}>Incoming Arrival Date (optional)</label>
           <input type="date" value=${form.incomingDate || ''} onChange=${e => update('incomingDate', e.target.value)}
             class=${inputClass} />
+          <p class="text-xs text-slate-400 mt-0.5">When your successor arrives (optional)</p>
         </div>
       </div>
       <div class="flex justify-end pt-2">

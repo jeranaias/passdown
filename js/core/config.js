@@ -9,7 +9,7 @@ const CATEGORIES = Object.freeze([
   { id: 'decision',    label: 'Decision Log',     icon: 'scale',     color: 'purple' },
   { id: 'stakeholder', label: 'Stakeholder Map',  icon: 'users',     color: 'green'  },
   { id: 'calendar',    label: 'Recurring Calendar', icon: 'calendar', color: 'orange' },
-  { id: 'lesson',      label: 'Lessons & Gotchas', icon: 'lightbulb', color: 'yellow' },
+  { id: 'lesson',      label: 'Lessons Learned', icon: 'lightbulb', color: 'yellow' },
   { id: 'issue',       label: 'Active Issues',    icon: 'flag',      color: 'red'    },
 ]);
 
@@ -31,6 +31,7 @@ const STORAGE_KEYS = Object.freeze({
   START_HERE:  'passdown_start_here',
   SETTINGS:    'passdown_settings',
   VERSION:     'passdown_version',
+  WELCOME_DISMISSED: 'passdown_welcome_dismissed',
 });
 
 // ─── Enumerations ───────────────────────────────────────────────────────────
