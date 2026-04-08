@@ -156,13 +156,15 @@ function OfflineAIConfiguration() {
     () => localStorage.getItem('passdown_ai_provider') || 'firebase'
   );
 
-  // Check WebGPU support on mount
+  const [gpuInfo, setGpuInfo] = useState(null);
+
+  // Deep check WebGPU support on mount
   useEffect(() => {
     const check = async () => {
-      const supported = WebLLMService.isSupported();
-      setWebGPUSupported(supported);
-      // Check if a model is already cached/loaded
-      if (supported && WebLLMService.isAvailable()) {
+      const result = await WebLLMService.checkGPU();
+      setWebGPUSupported(result.supported);
+      setGpuInfo(result);
+      if (result.supported && WebLLMService.isAvailable()) {
         setModelReady(true);
         setModelLoaded(true);
       }
@@ -240,9 +242,9 @@ function OfflineAIConfiguration() {
               : webGPUSupported ? 'w-2 h-2 rounded-full bg-green-500'
               : 'w-2 h-2 rounded-full bg-red-500'
           } />
-          ${webGPUSupported === null ? 'Checking...'
-            : webGPUSupported ? 'WebGPU supported'
-            : 'WebGPU not supported'}
+          ${webGPUSupported === null ? 'Checking GPU...'
+            : webGPUSupported ? ('WebGPU ready' + (gpuInfo?.gpu ? ' — ' + gpuInfo.gpu : ''))
+            : 'WebGPU not available'}
         </span>
       </div>
 
@@ -251,12 +253,26 @@ function OfflineAIConfiguration() {
       </p>
 
       ${!webGPUSupported && webGPUSupported !== null && html`
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p class="text-sm text-amber-800 font-medium mb-1">WebGPU Not Available</p>
-          <p class="text-xs text-amber-700 leading-relaxed">
-            Offline AI requires WebGPU, available in Chrome 113+, Edge 113+, or other Chromium browsers.
-            Offline AI requires a WebGPU-capable browser to run.
-          </p>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+          <p class="text-sm text-amber-800 font-medium">WebGPU Not Available</p>
+          ${gpuInfo?.reason && html`
+            <p class="text-xs text-amber-700 bg-amber-100 rounded px-2 py-1 font-mono">${gpuInfo.reason}</p>
+          `}
+          <div class="text-xs text-amber-700 space-y-2">
+            <p class="font-medium">Troubleshooting steps:</p>
+            <ol class="list-decimal list-inside space-y-1.5 leading-relaxed">
+              <li><strong>Check your browser:</strong> WebGPU requires Chrome 113+, Edge 113+, or another Chromium-based browser. Firefox and Safari have limited support.
+                <br/><span class="text-amber-600">Your browser: ${navigator.userAgent.match(/Chrome\/(\d+)/)?.[0] || navigator.userAgent.match(/Edg\/(\d+)/)?.[0] || 'Unknown'}</span>
+              </li>
+              <li><strong>Enable WebGPU flag:</strong> Open <span class="font-mono bg-amber-100 px-1 rounded">chrome://flags</span> in your address bar, search for "WebGPU", and enable <strong>"Unsafe WebGPU Support"</strong>. Restart browser.</li>
+              <li><strong>Update GPU drivers:</strong> Outdated drivers can prevent WebGPU. Check your GPU manufacturer's website (NVIDIA, AMD, Intel).</li>
+              <li><strong>Government/managed devices:</strong> Some organizations disable WebGPU via group policy. Check with your IT department or try on a personal device.</li>
+              <li><strong>Check GPU compatibility:</strong> Visit <a href="https://webgpureport.org" target="_blank" rel="noopener" class="underline font-medium">webgpureport.org</a> to see your GPU's WebGPU status.</li>
+            </ol>
+            <p class="pt-2 border-t border-amber-300 mt-2">
+              <strong>All other Passdown features work without AI.</strong> Knowledge capture, search, verification, export, and the full checklist work entirely without a GPU.
+            </p>
+          </div>
         </div>
       `}
 

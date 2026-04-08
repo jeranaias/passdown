@@ -27,6 +27,19 @@ const WebLLMService = {
     return !!navigator.gpu;
   },
 
+  // Deep check — actually request a GPU adapter (async)
+  async checkGPU() {
+    if (!navigator.gpu) return { supported: false, reason: 'WebGPU API not available. Use Chrome 113+ or Edge 113+.' };
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) return { supported: false, reason: 'No compatible GPU found. Your device may not have a GPU, or WebGPU may be disabled. Try: chrome://flags → enable "Unsafe WebGPU Support".' };
+      const info = await adapter.requestAdapterInfo?.() || {};
+      return { supported: true, gpu: info.description || info.device || 'GPU detected' };
+    } catch (err) {
+      return { supported: false, reason: 'GPU check failed: ' + err.message };
+    }
+  },
+
   // ── Initialize Engine ───────────────────────────────────────────────────
 
   async init(modelId, onProgress) {
@@ -35,8 +48,10 @@ const WebLLMService = {
       return;
     }
 
-    if (!this.isSupported()) {
-      throw new Error('WebGPU is not supported in this browser. Use Chrome 113+ or Edge 113+.');
+    // Deep GPU check before attempting download
+    const gpuCheck = await this.checkGPU();
+    if (!gpuCheck.supported) {
+      throw new Error(gpuCheck.reason + '\n\nTroubleshooting:\n1. Use Chrome 113+ or Edge 113+\n2. Try chrome://flags → enable "Unsafe WebGPU Support"\n3. Update GPU drivers\n4. Some government machines block WebGPU — check with IT');
     }
 
     const targetModel = modelId || DEFAULT_MODEL;

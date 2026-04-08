@@ -110,6 +110,19 @@ function FederationIcon(props) {
   `;
 }
 
+function CheckSquareIcon(props) {
+  const { size = 18, className = '' } = props || {};
+  return html`
+    <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      class=${className}>
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  `;
+}
+
 function BarChartIcon(props) {
   const { size = 18, className = '' } = props || {};
   return html`
@@ -120,6 +133,21 @@ function BarChartIcon(props) {
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  `;
+}
+
+function WandIcon(props) {
+  const { size = 18, className = '' } = props || {};
+  return html`
+    <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size}
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      class=${className}>
+      <path d="M15 4V2" /><path d="M15 16v-2" /><path d="M8 9h2" /><path d="M20 9h2" />
+      <path d="M17.8 11.8 20 14" /><path d="M15 7a3 3 0 0 0-3 3" />
+      <path d="M6.2 6.2 8 8" />
+      <path d="M2 22l4-11 5 5Z" /><path d="M7 16.5l-1.5 1.5" />
     </svg>
   `;
 }
@@ -227,6 +255,19 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
       <!-- Navigation -->
       <nav role="navigation" class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
 
+        <!-- Guided Setup (featured) -->
+        <button
+          onClick=${() => handleNav('guided')}
+          class=${'w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors mb-1 ' +
+            (activeHash === 'guided'
+              ? 'bg-olive-600 text-white font-medium shadow-sm'
+              : 'bg-olive-900/40 text-olive-200 hover:bg-olive-800/60 hover:text-white border border-olive-700/50')}
+        >
+          <span class="flex-shrink-0">${WandIcon({ size: 18 })}</span>
+          <span class="truncate flex-1 text-left">Guided Setup</span>
+          <span class="flex-shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-olive-500/30 text-olive-200">New</span>
+        </button>
+
         <${NavItem}
           icon=${HomeIcon()}
           label="Dashboard"
@@ -296,6 +337,14 @@ function Sidebar({ activeHash, mobile = false, onClose, showInstall = false }) {
           hash="verify"
           active=${activeHash === 'verify'}
           onClick=${() => handleNav('verify')}
+        />
+
+        <${NavItem}
+          icon=${CheckSquareIcon()}
+          label="Checklist"
+          hash="checklist"
+          active=${activeHash === 'checklist'}
+          onClick=${() => handleNav('checklist')}
         />
 
         <${NavItem}
@@ -390,6 +439,7 @@ async function loadComponent(hash) {
 
   const componentMap = {
     'dashboard':            () => import('./dashboard.js'),
+    'guided':               () => import('./guided-builder.js'),
     'capture':              () => import('./capture.js'),
     'capture/stakeholders': () => import('./stakeholder-map.js'),
     'capture/calendar':     () => import('./calendar-view.js'),
@@ -397,6 +447,7 @@ async function loadComponent(hash) {
     'search':               () => import('./search-panel.js'),
     'narrative':            () => import('./narrative.js'),
     'verify':               () => import('./verification.js'),
+    'checklist':            () => import('./checklist.js'),
     'start-here':           () => import('./start-here.js'),
     'export':               () => import('./export-import.js'),
     'federation':           () => import('./federation.js'),
