@@ -8,7 +8,7 @@ import { AppContext } from './app.js';
 import { Button, Tag, TextInput, TextArea, Select, ConfirmDialog, showToast } from '../shared/ui.js';
 import {
   IconFolder, IconScale, IconUsers, IconCalendar, IconLightbulb, IconFlag,
-  IconEdit, IconEye, IconTrash, IconCheck, IconStar,
+  IconEdit, IconEye, IconTrash, IconCheck, IconStar, IconPlus, IconArrowUp, IconArrowDown, IconX,
 } from '../shared/icons.js';
 import { MarkdownPreview } from '../shared/markdown.js';
 import FileDropZone from './file-drop-zone.js';
@@ -123,6 +123,100 @@ function defaultMeta(category) {
   }
 }
 
+// ─── Content Parsing Utilities ──────────────────────────────────────────────
+// Parse structured fields back from markdown content for edit mode.
+
+function parseStepsFromContent(content, category) {
+  if (category !== 'process' || !content) return [''];
+  const stepsMatch = content.match(/## Steps\n([\s\S]*?)(?=\n## |$)/);
+  if (!stepsMatch) {
+    // Try parsing numbered list lines from the whole content
+    const lines = content.split('\n').filter(l => /^\d+\.\s/.test(l.trim()));
+    return lines.length > 0 ? lines.map(l => l.replace(/^\d+\.\s*/, '').trim()) : [''];
+  }
+  const lines = stepsMatch[1].split('\n').filter(l => /^\d+\.\s/.test(l.trim()));
+  return lines.length > 0 ? lines.map(l => l.replace(/^\d+\.\s*/, '').trim()) : [''];
+}
+
+function parseProcessNotes(content, category) {
+  if (category !== 'process' || !content) return '';
+  const match = content.match(/## Additional Notes\n([\s\S]*?)(?=\n## |$)/);
+  return match ? match[1].trim() : '';
+}
+
+function parseProcessContacts(content, category) {
+  if (category !== 'process' || !content) return '';
+  const match = content.match(/## Key Contacts\n([\s\S]*?)(?=\n## |$)/);
+  return match ? match[1].trim() : '';
+}
+
+function parseProcessTimeline(content, category) {
+  if (category !== 'process' || !content) return '';
+  const match = content.match(/## Timeline\n([\s\S]*?)(?=\n## |$)/);
+  return match ? match[1].trim() : '';
+}
+
+function parseLessonSection(content, category, heading) {
+  if (category !== 'lesson' || !content) return '';
+  const regex = new RegExp('## ' + heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\n([\\s\\S]*?)(?=\\n## |$)');
+  const match = content.match(regex);
+  return match ? match[1].trim() : '';
+}
+
+function parseDecisionSection(content, category, heading) {
+  if (category !== 'decision' || !content) return '';
+  const regex = new RegExp('## ' + heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\n([\\s\\S]*?)(?=\\n## |$)');
+  const match = content.match(regex);
+  return match ? match[1].trim() : '';
+}
+
+function parseIssueSection(content, category, heading) {
+  if (category !== 'issue' || !content) return '';
+  const regex = new RegExp('## ' + heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\n([\\s\\S]*?)(?=\\n## |$)');
+  const match = content.match(regex);
+  return match ? match[1].trim() : '';
+}
+
+// ─── Content Assembly Utilities ──────────────────────────────────────────────
+// Assemble structured fields into markdown content for saving.
+
+function assembleProcessContent(steps, notes, contacts, timeline) {
+  let parts = [];
+  const validSteps = steps.filter(s => s.trim());
+  if (validSteps.length > 0) {
+    parts.push('## Steps\n' + validSteps.map((s, i) => `${i + 1}. ${s}`).join('\n'));
+  }
+  if (contacts.trim()) parts.push('## Key Contacts\n' + contacts.trim());
+  if (timeline.trim()) parts.push('## Timeline\n' + timeline.trim());
+  if (notes.trim()) parts.push('## Additional Notes\n' + notes.trim());
+  return parts.join('\n\n');
+}
+
+function assembleLessonContent(what, takeaway, apply) {
+  let parts = [];
+  if (what.trim()) parts.push('## What Happened\n' + what.trim());
+  if (takeaway.trim()) parts.push('## The Lesson\n' + takeaway.trim());
+  if (apply.trim()) parts.push('## How to Apply This\n' + apply.trim());
+  return parts.join('\n\n');
+}
+
+function assembleDecisionContent(text, alternatives, rationale, impact) {
+  let parts = [];
+  if (text.trim()) parts.push('## The Decision\n' + text.trim());
+  if (alternatives.trim()) parts.push('## Alternatives Considered\n' + alternatives.trim());
+  if (rationale.trim()) parts.push('## Rationale\n' + rationale.trim());
+  if (impact.trim()) parts.push('## Impact\n' + impact.trim());
+  return parts.join('\n\n');
+}
+
+function assembleIssueContent(background, currentStatus, nextSteps) {
+  let parts = [];
+  if (background.trim()) parts.push('## Background\n' + background.trim());
+  if (currentStatus.trim()) parts.push('## Current Status\n' + currentStatus.trim());
+  if (nextSteps.trim()) parts.push('## Next Steps\n' + nextSteps.trim());
+  return parts.join('\n\n');
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Capture Component
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -162,6 +256,31 @@ export default function Capture() {
     }
     return defaultMeta(resolvedCategory);
   });
+
+  // ─── Structured field state (category-specific) ───────────────────────────
+
+  // Process: dynamic steps list
+  const [steps, setSteps] = useState(() => parseStepsFromContent(existingEntry?.content, resolvedCategory));
+  const [processNotes, setProcessNotes] = useState(() => parseProcessNotes(existingEntry?.content, resolvedCategory));
+  const [processContacts, setProcessContacts] = useState(() => parseProcessContacts(existingEntry?.content, resolvedCategory));
+  const [processTimeline, setProcessTimeline] = useState(() => parseProcessTimeline(existingEntry?.content, resolvedCategory));
+  const [showProcessNotes, setShowProcessNotes] = useState(false);
+
+  // Lessons Learned: three structured textareas
+  const [lessonWhat, setLessonWhat] = useState(() => parseLessonSection(existingEntry?.content, resolvedCategory, 'What Happened'));
+  const [lessonTakeaway, setLessonTakeaway] = useState(() => parseLessonSection(existingEntry?.content, resolvedCategory, 'The Lesson'));
+  const [lessonApply, setLessonApply] = useState(() => parseLessonSection(existingEntry?.content, resolvedCategory, 'How to Apply This'));
+
+  // Decision Log: structured fields
+  const [decisionText, setDecisionText] = useState(() => parseDecisionSection(existingEntry?.content, resolvedCategory, 'The Decision'));
+  const [decisionAlternatives, setDecisionAlternatives] = useState(() => parseDecisionSection(existingEntry?.content, resolvedCategory, 'Alternatives Considered'));
+  const [decisionRationale, setDecisionRationale] = useState(() => parseDecisionSection(existingEntry?.content, resolvedCategory, 'Rationale'));
+  const [decisionImpact, setDecisionImpact] = useState(() => parseDecisionSection(existingEntry?.content, resolvedCategory, 'Impact'));
+
+  // Active Issues: structured fields
+  const [issueBackground, setIssueBackground] = useState(() => parseIssueSection(existingEntry?.content, resolvedCategory, 'Background'));
+  const [issueCurrentStatus, setIssueCurrentStatus] = useState(() => parseIssueSection(existingEntry?.content, resolvedCategory, 'Current Status'));
+  const [issueNextSteps, setIssueNextSteps] = useState(() => parseIssueSection(existingEntry?.content, resolvedCategory, 'Next Steps'));
 
   // ─── Content editor: edit vs preview ──────────────────────────────────────
 
@@ -205,6 +324,18 @@ export default function Capture() {
   // ─── Handle category change ───────────────────────────────────────────────
 
   const handleCategoryChange = useCallback((newCat) => {
+    // Preserve structured content into the generic content field before switching
+    const oldCat = category;
+    if (oldCat === 'process') {
+      setContent(assembleProcessContent(steps, processNotes, processContacts, processTimeline));
+    } else if (oldCat === 'lesson') {
+      setContent(assembleLessonContent(lessonWhat, lessonTakeaway, lessonApply));
+    } else if (oldCat === 'decision') {
+      setContent(assembleDecisionContent(decisionText, decisionAlternatives, decisionRationale, decisionImpact));
+    } else if (oldCat === 'issue') {
+      setContent(assembleIssueContent(issueBackground, issueCurrentStatus, issueNextSteps));
+    }
+
     setCategory(newCat);
     setMeta(prev => {
       const base = defaultMeta(newCat);
@@ -213,7 +344,21 @@ export default function Capture() {
       }
       return base;
     });
-  }, [existingEntry]);
+
+    // Reset structured fields for the new category (they'll be empty for a new category)
+    if (newCat === 'process') {
+      setSteps(['']); setProcessNotes(''); setProcessContacts(''); setProcessTimeline('');
+    } else if (newCat === 'lesson') {
+      setLessonWhat(''); setLessonTakeaway(''); setLessonApply('');
+    } else if (newCat === 'decision') {
+      setDecisionText(''); setDecisionAlternatives(''); setDecisionRationale(''); setDecisionImpact('');
+    } else if (newCat === 'issue') {
+      setIssueBackground(''); setIssueCurrentStatus(''); setIssueNextSteps('');
+    }
+  }, [existingEntry, category, steps, processNotes, processContacts, processTimeline,
+      lessonWhat, lessonTakeaway, lessonApply,
+      decisionText, decisionAlternatives, decisionRationale, decisionImpact,
+      issueBackground, issueCurrentStatus, issueNextSteps]);
 
   // ─── Meta field updater ───────────────────────────────────────────────────
 
@@ -268,16 +413,38 @@ export default function Capture() {
 
   // ─── Save ─────────────────────────────────────────────────────────────────
 
+  // ─── Assemble final content from structured fields ────────────────────────
+
+  const assembleContent = useCallback(() => {
+    switch (category) {
+      case 'process':
+        return assembleProcessContent(steps, processNotes, processContacts, processTimeline);
+      case 'lesson':
+        return assembleLessonContent(lessonWhat, lessonTakeaway, lessonApply);
+      case 'decision':
+        return assembleDecisionContent(decisionText, decisionAlternatives, decisionRationale, decisionImpact);
+      case 'issue':
+        return assembleIssueContent(issueBackground, issueCurrentStatus, issueNextSteps);
+      default:
+        return content;
+    }
+  }, [category, steps, processNotes, processContacts, processTimeline,
+      lessonWhat, lessonTakeaway, lessonApply,
+      decisionText, decisionAlternatives, decisionRationale, decisionImpact,
+      issueBackground, issueCurrentStatus, issueNextSteps, content]);
+
   const handleSave = useCallback(() => {
     if (!validate()) {
       showToast('Please fix the highlighted errors.', 'error');
       return;
     }
 
+    const finalContent = assembleContent();
+
     const entryData = {
       category,
       title: title.trim(),
-      content,
+      content: finalContent,
       tags,
       priority,
       essentialReading,
@@ -296,7 +463,7 @@ export default function Capture() {
       setDirty(false);
       setShowSuccess(true);
     }
-  }, [category, title, content, tags, priority, essentialReading, meta, isEdit, entryId, addEntry, updateEntry, navigate, validate]);
+  }, [category, title, content, tags, priority, essentialReading, meta, isEdit, entryId, addEntry, updateEntry, navigate, validate, assembleContent]);
 
   // ─── Delete ───────────────────────────────────────────────────────────────
 
@@ -338,7 +505,7 @@ export default function Capture() {
           <h2 class="text-xl font-bold text-navy-900">Entry Created</h2>
           <p class="text-sm text-slate-600">Your knowledge has been captured and saved.</p>
           <div class="flex flex-wrap justify-center gap-3 pt-2">
-            <${Button} onClick=${() => { setShowSuccess(false); setTitle(''); setContent(''); setTags([]); setTagInput(''); setPriority('medium'); setEssentialReading(false); setMeta(defaultMeta(category)); setErrors({}); }}>Add Another Entry<//>
+            <${Button} onClick=${() => { setShowSuccess(false); setTitle(''); setContent(''); setTags([]); setTagInput(''); setPriority('medium'); setEssentialReading(false); setMeta(defaultMeta(category)); setErrors({}); setSteps(['']); setProcessNotes(''); setProcessContacts(''); setProcessTimeline(''); setLessonWhat(''); setLessonTakeaway(''); setLessonApply(''); setDecisionText(''); setDecisionAlternatives(''); setDecisionRationale(''); setDecisionImpact(''); setIssueBackground(''); setIssueCurrentStatus(''); setIssueNextSteps(''); }}>Add Another Entry<//>
             <${Button} variant="secondary" onClick=${() => navigate('browse')}>View in Browse<//>
             <${Button} variant="secondary" onClick=${() => navigate('guided')}>Back to Guided Setup<//>
           </div>
@@ -356,6 +523,819 @@ export default function Capture() {
     calendar:    { active: 'bg-orange-50 border-orange-500 text-orange-800', hover: 'hover:bg-orange-50/50' },
     lesson:      { active: 'bg-yellow-50 border-yellow-500 text-yellow-800', hover: 'hover:bg-yellow-50/50' },
     issue:       { active: 'bg-red-50 border-red-500 text-red-800', hover: 'hover:bg-red-50/50' },
+  };
+
+  // ─── Step management helpers (Process & SOPs) ─────────────────────────────
+
+  const addStep = useCallback(() => {
+    setSteps(prev => [...prev, '']);
+    setDirty(true);
+  }, []);
+
+  const removeStep = useCallback((index) => {
+    setSteps(prev => prev.length <= 1 ? [''] : prev.filter((_, i) => i !== index));
+    setDirty(true);
+  }, []);
+
+  const updateStep = useCallback((index, value) => {
+    setSteps(prev => prev.map((s, i) => i === index ? value : s));
+    setDirty(true);
+  }, []);
+
+  const moveStep = useCallback((index, direction) => {
+    setSteps(prev => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+    setDirty(true);
+  }, []);
+
+  // ─── Color border for current category ───────────────────────────────────
+
+  const catColor = CATEGORIES.find(c => c.id === category)?.color || 'slate';
+  const borderColorMap = {
+    blue: 'border-blue-400', purple: 'border-purple-400', green: 'border-green-400',
+    orange: 'border-orange-400', yellow: 'border-yellow-400', red: 'border-red-400',
+  };
+  const bgTintMap = {
+    blue: 'bg-blue-50/40', purple: 'bg-purple-50/40', green: 'bg-green-50/40',
+    orange: 'bg-orange-50/40', yellow: 'bg-yellow-50/40', red: 'bg-red-50/40',
+  };
+  const formBorder = borderColorMap[catColor] || 'border-slate-200';
+  const formBgTint = bgTintMap[catColor] || '';
+
+  // ─── Shared sub-renders ──────────────────────────────────────────────────
+
+  const renderTagsRow = () => html`
+    <div>
+      <label class="text-sm font-medium text-slate-700 block mb-1">Tags</label>
+      <div class="flex flex-wrap items-center gap-1.5 p-2 border border-slate-300 rounded-md bg-white
+                  focus-within:ring-2 focus-within:ring-navy-500 focus-within:border-navy-500 min-h-[42px]">
+        ${tags.map(tag => html`
+          <${Tag} key=${tag} label=${tag} onRemove=${() => removeTag(tag)} />
+        `)}
+        <input
+          ref=${tagInputRef}
+          type="text"
+          value=${tagInput}
+          onChange=${(e) => { setTagInput(e.target.value); setDirty(true); }}
+          onKeyDown=${handleTagKeyDown}
+          onBlur=${() => { if (tagInput.trim()) addTagsFromInput(); }}
+          placeholder=${tags.length === 0 ? 'Add tags (comma-separated)...' : 'Add more...'}
+          class="flex-1 min-w-[120px] px-1 py-1 text-sm border-0 outline-none bg-transparent placeholder-slate-400"
+        />
+      </div>
+    </div>
+  `;
+
+  const renderPriorityEssentialRow = () => html`
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+      <${Select}
+        label="Priority"
+        value=${priority}
+        onChange=${(v) => { setPriority(v); setDirty(true); }}
+        options=${PRIORITIES.map(p => ({ value: p.id, label: p.label }))}
+      />
+      <div class="flex items-end pb-1">
+        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked=${essentialReading}
+            onChange=${(e) => { setEssentialReading(e.target.checked); setDirty(true); }}
+            class="w-4 h-4 rounded border-slate-300 text-navy-700 focus:ring-navy-500"
+          />
+          <span class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+            <${IconStar} size=${16} className="text-yellow-500" />
+            Essential Reading
+          </span>
+        </label>
+      </div>
+    </div>
+  `;
+
+  const renderFileImport = () => html`
+    <div>
+      <button
+        type="button"
+        onClick=${() => setFileImportOpen(o => !o)}
+        class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"
+      >
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            class="text-slate-500">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <polyline points="9 15 12 12 15 15" />
+          </svg>
+          Import from File
+        </span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class=${'transition-transform ' + (fileImportOpen ? '' : '-rotate-90')}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      ${fileImportOpen && html`
+        <div class="mt-2">
+          <${FileDropZone}
+            onContent=${({ content: fileContent, title: fileTitle }) => {
+              setContent(prev => prev ? prev + '\n\n' + fileContent : fileContent);
+              if (!title.trim() && fileTitle) setTitle(fileTitle);
+              showToast('File converted to markdown. Review and edit as needed.', 'success');
+            }}
+            onError=${(msg) => showToast(msg, 'error')}
+          />
+        </div>
+      `}
+    </div>
+  `;
+
+  const renderGenericContentEditor = (label, placeholder, rows) => html`
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <label class="text-sm font-medium text-slate-700">${label || 'Content'}</label>
+        <div class="flex items-center gap-1">
+          <button type="button" onClick=${() => setShowPreview(false)}
+            class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
+              + (!showPreview ? 'bg-navy-100 text-navy-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
+            <span class="flex items-center gap-1"><${IconEdit} size=${14} /> Write</span>
+          </button>
+          <button type="button" onClick=${() => setShowPreview(true)}
+            class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
+              + (showPreview ? 'bg-navy-100 text-navy-700' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
+            <span class="flex items-center gap-1"><${IconEye} size=${14} /> Preview</span>
+          </button>
+        </div>
+      </div>
+      ${!showPreview
+        ? html`
+          <textarea
+            value=${content}
+            onChange=${(e) => { setContent(e.target.value); setDirty(true); }}
+            rows=${rows || 10}
+            placeholder=${placeholder || 'Write your knowledge here... Markdown is supported.'}
+            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                   text-slate-700 placeholder-slate-400 resize-y font-mono
+                   focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
+          />
+        `
+        : html`
+          <div class=${'min-h-[' + ((rows || 10) * 24) + 'px] p-4 border border-slate-300 rounded-md bg-slate-50 overflow-auto'}>
+            ${content.trim()
+              ? html`<${MarkdownPreview} content=${content} />`
+              : html`<p class="text-slate-400 italic text-sm">Nothing to preview.</p>`
+            }
+          </div>
+        `
+      }
+      <p class="text-xs text-slate-400 mt-1">Supports Markdown: **bold**, *italic*, ## headings, - lists, \`code\`, etc.</p>
+    </div>
+  `;
+
+  // ═════════════════════════════════════════════════════════════════════════════
+  // Category-Specific Form Renderers
+  // ═════════════════════════════════════════════════════════════════════════════
+
+  const renderProcessForm = () => html`
+    <div class="space-y-6">
+      <!-- Title -->
+      <div>
+        <${TextInput}
+          label="Process / SOP Title"
+          required=${true}
+          value=${title}
+          onChange=${(v) => { setTitle(v); setDirty(true); }}
+          placeholder="e.g., Weekly Readiness Report Submission Process"
+        />
+        ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+      </div>
+
+      <!-- Structured Steps -->
+      <div>
+        <label class="text-sm font-semibold text-slate-700 block mb-2">Steps</label>
+        <div class="space-y-2">
+          ${steps.map((step, i) => html`
+            <div key=${i} class="flex items-start gap-2 group">
+              <span class="flex-shrink-0 w-7 h-9 flex items-center justify-center text-xs font-bold text-blue-600 bg-blue-50 rounded-md border border-blue-200 mt-0.5">
+                ${i + 1}
+              </span>
+              <input
+                type="text"
+                value=${step}
+                onChange=${(e) => updateStep(i, e.target.value)}
+                placeholder=${'Step ' + (i + 1) + '...'}
+                class="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                       text-slate-700 placeholder-slate-400
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" onClick=${() => moveStep(i, -1)} disabled=${i === 0}
+                  class="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Move up">
+                  <${IconArrowUp} size=${14} />
+                </button>
+                <button type="button" onClick=${() => moveStep(i, 1)} disabled=${i === steps.length - 1}
+                  class="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Move down">
+                  <${IconArrowDown} size=${14} />
+                </button>
+                <button type="button" onClick=${() => removeStep(i)}
+                  class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Remove step">
+                  <${IconX} size=${14} />
+                </button>
+              </div>
+            </div>
+          `)}
+        </div>
+        <button type="button" onClick=${addStep}
+          class="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors">
+          <${IconPlus} size=${14} /> Add Step
+        </button>
+      </div>
+
+      <!-- Key Contacts -->
+      <${TextInput}
+        label="Key Contacts"
+        value=${processContacts}
+        onChange=${(v) => { setProcessContacts(v); setDirty(true); }}
+        placeholder="Who to contact for questions about this process"
+      />
+
+      <!-- Timeline -->
+      <${TextInput}
+        label="Typical Timeline"
+        value=${processTimeline}
+        onChange=${(v) => { setProcessTimeline(v); setDirty(true); }}
+        placeholder='e.g., "Takes 2-3 business days", "Allow 1 week lead time"'
+      />
+
+      <!-- Collapsible free-form notes -->
+      <div>
+        <button type="button" onClick=${() => setShowProcessNotes(p => !p)}
+          class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class=${'transition-transform ' + (showProcessNotes ? '' : '-rotate-90')}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+          Additional Notes
+          ${processNotes.trim() && html`<span class="text-xs text-slate-400">(has content)</span>`}
+        </button>
+        ${showProcessNotes && html`
+          <div class="mt-2">
+            <textarea
+              value=${processNotes}
+              onChange=${(e) => { setProcessNotes(e.target.value); setDirty(true); }}
+              rows=${4}
+              placeholder="Any additional context, exceptions, or notes about this process..."
+              class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                     text-slate-700 placeholder-slate-400 resize-y font-mono
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        `}
+      </div>
+
+      ${renderFileImport()}
+
+      <!-- Tags, Priority, Essential Reading -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div class="sm:col-span-2">${renderTagsRow()}</div>
+        <${Select}
+          label="Priority"
+          value=${priority}
+          onChange=${(v) => { setPriority(v); setDirty(true); }}
+          options=${PRIORITIES.map(p => ({ value: p.id, label: p.label }))}
+        />
+      </div>
+      <label class="flex items-center gap-2.5 cursor-pointer select-none">
+        <input type="checkbox" checked=${essentialReading}
+          onChange=${(e) => { setEssentialReading(e.target.checked); setDirty(true); }}
+          class="w-4 h-4 rounded border-slate-300 text-navy-700 focus:ring-navy-500" />
+        <span class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+          <${IconStar} size=${16} className="text-yellow-500" /> Essential Reading
+        </span>
+        <span class="text-xs text-slate-400">(flags for Start Here list)</span>
+      </label>
+    </div>
+  `;
+
+  const renderStakeholderForm = () => html`
+    <div class="space-y-6">
+      <!-- Title (name / billet reference) -->
+      <div>
+        <${TextInput}
+          label="Contact Name / Reference"
+          required=${true}
+          value=${title}
+          onChange=${(v) => { setTitle(v); setDirty(true); }}
+          placeholder="e.g., G-3 Operations Officer"
+        />
+        ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+      </div>
+
+      <!-- Contact Card -->
+      <div class="bg-green-50/30 border border-green-200 rounded-lg p-5 space-y-4">
+        <!-- Billet Title (prominent) -->
+        <div>
+          <${TextInput}
+            label="Billet Title"
+            required=${true}
+            value=${meta.billetTitle || ''}
+            onChange=${(v) => { updateMeta('billetTitle', v); setDirty(true); }}
+            placeholder="e.g., S-3 Operations Officer"
+          />
+          ${errors.billetTitle && html`<p class="text-red-500 text-xs mt-1">${errors.billetTitle}</p>`}
+        </div>
+
+        <!-- Organization -->
+        <${TextInput}
+          label="Organization"
+          value=${meta.organization || ''}
+          onChange=${(v) => { updateMeta('organization', v); setDirty(true); }}
+          placeholder="e.g., 1st Marine Division G-3"
+        />
+
+        <!-- Two-column: Phone | Email -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <${TextInput}
+            label="Phone"
+            value=${meta.phone || ''}
+            onChange=${(v) => { updateMeta('phone', v); setDirty(true); }}
+            placeholder="DSN or commercial"
+          />
+          <${TextInput}
+            label="Email"
+            value=${meta.email || ''}
+            onChange=${(v) => { updateMeta('email', v); setDirty(true); }}
+            placeholder="official email"
+            type="email"
+          />
+        </div>
+
+        <!-- Contact Frequency: visual selector buttons -->
+        <div>
+          <label class="text-sm font-medium text-slate-700 block mb-2">Contact Frequency</label>
+          <div class="flex flex-wrap gap-2">
+            ${FREQUENCY_OPTIONS.map(opt => html`
+              <button key=${opt.value} type="button"
+                onClick=${() => { updateMeta('contactFrequency', opt.value); setDirty(true); }}
+                class=${'px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-all '
+                  + ((meta.contactFrequency || 'asNeeded') === opt.value
+                    ? 'bg-green-100 border-green-500 text-green-800 shadow-sm'
+                    : 'border-slate-200 text-slate-500 hover:bg-green-50/50')}>
+                ${opt.label}
+              </button>
+            `)}
+          </div>
+        </div>
+
+        <!-- Relationship Context -->
+        <${TextArea}
+          label="Relationship Context"
+          value=${meta.relationshipContext || ''}
+          onChange=${(v) => { updateMeta('relationshipContext', v); setDirty(true); }}
+          placeholder="Why do you contact this person? Under what circumstances? What do they need from you?"
+          rows=${3}
+        />
+      </div>
+
+      <!-- Content (collapsed by default for stakeholders) -->
+      <div>
+        <button type="button" onClick=${() => setShowProcessNotes(p => !p)}
+          class="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class=${'transition-transform ' + (showProcessNotes ? '' : '-rotate-90')}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+          Additional Notes
+          ${content.trim() && html`<span class="text-xs text-slate-400">(has content)</span>`}
+        </button>
+        ${showProcessNotes && html`
+          <div class="mt-2">
+            <textarea
+              value=${content}
+              onChange=${(e) => { setContent(e.target.value); setDirty(true); }}
+              rows=${4}
+              placeholder="Any additional notes about this stakeholder..."
+              class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                     text-slate-700 placeholder-slate-400 resize-y font-mono
+                     focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+        `}
+      </div>
+
+      <!-- Tags auto-suggested + Priority row -->
+      ${renderTagsRow()}
+      ${renderPriorityEssentialRow()}
+    </div>
+  `;
+
+  const renderCalendarForm = () => {
+    const recurrence = meta.recurrence || 'annual';
+    const showMonth = recurrence === 'annual';
+    const showDayOfMonth = recurrence === 'annual' || recurrence === 'monthly';
+    const prepDays = parseInt(meta.prepLeadDays) || 0;
+
+    return html`
+      <div class="space-y-6">
+        <!-- Event Name -->
+        <div>
+          <${TextInput}
+            label="Event Name"
+            required=${true}
+            value=${title}
+            onChange=${(v) => { setTitle(v); setDirty(true); }}
+            placeholder="e.g., Annual Training Plan Submission"
+          />
+          ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+        </div>
+
+        <!-- Event Card -->
+        <div class="bg-orange-50/30 border border-orange-200 rounded-lg p-5 space-y-5">
+          <!-- Recurrence: visual selector -->
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Recurrence</label>
+            <div class="flex flex-wrap gap-2">
+              ${RECURRENCE_OPTIONS.map(opt => html`
+                <button key=${opt.value} type="button"
+                  onClick=${() => { updateMeta('recurrence', opt.value); setDirty(true); }}
+                  class=${'px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-all '
+                    + (recurrence === opt.value
+                      ? 'bg-orange-100 border-orange-500 text-orange-800 shadow-sm'
+                      : 'border-slate-200 text-slate-500 hover:bg-orange-50/50')}>
+                  ${opt.label}
+                </button>
+              `)}
+            </div>
+          </div>
+
+          <!-- Conditional: Month picker (annual) -->
+          ${showMonth && html`
+            <${Select}
+              label="Month"
+              value=${meta.month || ''}
+              onChange=${(v) => { updateMeta('month', v); setDirty(true); }}
+              options=${MONTH_OPTIONS}
+              placeholder="Select month..."
+            />
+          `}
+
+          <!-- Conditional: Day of month (annual, monthly) -->
+          ${showDayOfMonth && html`
+            <div>
+              <label class="text-sm font-medium text-slate-700 block mb-1">Day of Month</label>
+              <input type="number" min="1" max="31"
+                value=${meta.dayOfMonth || ''}
+                onChange=${(e) => { updateMeta('dayOfMonth', e.target.value); setDirty(true); }}
+                placeholder="1-31"
+                class="w-32 px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                       text-slate-700 placeholder-slate-400
+                       focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+          `}
+
+          <!-- Duration -->
+          <${TextInput}
+            label="Duration"
+            value=${meta.duration || ''}
+            onChange=${(v) => { updateMeta('duration', v); setDirty(true); }}
+            placeholder='e.g., "2 weeks", "3 days", "4 hours"'
+          />
+
+          <!-- Prep Lead Time with visual indicator -->
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-1">Prep Lead Time</label>
+            <div class="flex items-center gap-3">
+              <input type="number" min="0"
+                value=${meta.prepLeadDays || ''}
+                onChange=${(e) => { updateMeta('prepLeadDays', e.target.value); setDirty(true); }}
+                placeholder="Days"
+                class="w-24 px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                       text-slate-700 placeholder-slate-400
+                       focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+              <span class="text-sm text-slate-500">days before event</span>
+              ${prepDays > 0 && html`
+                <span class=${'text-xs font-medium px-2 py-0.5 rounded-full '
+                  + (prepDays >= 14 ? 'bg-red-100 text-red-700' : prepDays >= 7 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700')}>
+                  ${prepDays >= 14 ? 'Long lead' : prepDays >= 7 ? 'Medium lead' : 'Short lead'}
+                </span>
+              `}
+            </div>
+          </div>
+        </div>
+
+        <!-- Description (smaller textarea serves as content) -->
+        <${TextArea}
+          label="What needs to happen?"
+          value=${content}
+          onChange=${(v) => { setContent(v); setDirty(true); }}
+          placeholder="Describe the event and what actions are required..."
+          rows=${4}
+        />
+
+        ${renderFileImport()}
+        ${renderTagsRow()}
+        ${renderPriorityEssentialRow()}
+      </div>
+    `;
+  };
+
+  const renderDecisionForm = () => html`
+    <div class="space-y-6">
+      <!-- Title -->
+      <div>
+        <${TextInput}
+          label="What was decided?"
+          required=${true}
+          value=${title}
+          onChange=${(v) => { setTitle(v); setDirty(true); }}
+          placeholder="e.g., Switched to bi-weekly reporting cadence"
+        />
+        ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+      </div>
+
+      <!-- Decision Card -->
+      <div class="bg-purple-50/30 border border-purple-200 rounded-lg p-5 space-y-5">
+        <!-- Decision Date + Reversible row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+          <div>
+            <label class="text-sm font-semibold text-slate-700 block mb-1">Decision Date</label>
+            <input type="date"
+              value=${meta.decisionDate || ''}
+              onChange=${(e) => { updateMeta('decisionDate', e.target.value); setDirty(true); }}
+              class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                     text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+          </div>
+          <div>
+            <label class="flex items-center gap-3 cursor-pointer select-none py-2">
+              <div class="relative">
+                <input type="checkbox" checked=${meta.reversible || false}
+                  onChange=${(e) => { updateMeta('reversible', e.target.checked); setDirty(true); }}
+                  class="sr-only peer" />
+                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-purple-500 rounded-full transition-colors" />
+                <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4" />
+              </div>
+              <span class="text-sm font-medium text-slate-700">Reversible?</span>
+              <span class="text-xs text-slate-400">(can this decision be undone?)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- The Decision -->
+        <${TextArea}
+          label="The Decision"
+          value=${decisionText}
+          onChange=${(v) => { setDecisionText(v); setDirty(true); }}
+          placeholder="Describe what was decided in detail..."
+          rows=${3}
+        />
+
+        <!-- Alternatives Considered -->
+        <${TextArea}
+          label="Alternatives Considered"
+          value=${decisionAlternatives}
+          onChange=${(v) => { setDecisionAlternatives(v); setDirty(true); }}
+          placeholder="What other options were on the table?"
+          rows=${3}
+        />
+
+        <!-- Rationale -->
+        <${TextArea}
+          label="Rationale"
+          value=${decisionRationale}
+          onChange=${(v) => { setDecisionRationale(v); setDirty(true); }}
+          placeholder="Why was this path chosen?"
+          rows=${3}
+        />
+
+        <!-- Impact -->
+        <${TextArea}
+          label="Impact"
+          value=${decisionImpact}
+          onChange=${(v) => { setDecisionImpact(v); setDirty(true); }}
+          placeholder="What changed as a result of this decision?"
+          rows=${3}
+        />
+      </div>
+
+      ${renderFileImport()}
+      ${renderTagsRow()}
+      ${renderPriorityEssentialRow()}
+    </div>
+  `;
+
+  const renderLessonForm = () => html`
+    <div class="space-y-6">
+      <!-- Title -->
+      <div>
+        <${TextInput}
+          label="The lesson in one sentence"
+          required=${true}
+          value=${title}
+          onChange=${(v) => { setTitle(v); setDirty(true); }}
+          placeholder="e.g., Never assume the POC list is current"
+        />
+        ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+      </div>
+
+      <!-- Lesson Card -->
+      <div class="bg-yellow-50/30 border border-yellow-300 rounded-lg p-5 space-y-5">
+        <!-- What happened? -->
+        <${TextArea}
+          label="What happened?"
+          value=${lessonWhat}
+          onChange=${(v) => { setLessonWhat(v); setDirty(true); }}
+          placeholder="Describe the situation that led to this lesson..."
+          rows=${4}
+        />
+
+        <!-- What did you learn? -->
+        <${TextArea}
+          label="What did you learn?"
+          value=${lessonTakeaway}
+          onChange=${(v) => { setLessonTakeaway(v); setDirty(true); }}
+          placeholder="What is the key takeaway?"
+          rows=${3}
+        />
+
+        <!-- How to avoid/apply this -->
+        <${TextArea}
+          label="How to avoid/apply this"
+          value=${lessonApply}
+          onChange=${(v) => { setLessonApply(v); setDirty(true); }}
+          placeholder="What should your successor do differently?"
+          rows=${3}
+        />
+      </div>
+
+      ${renderFileImport()}
+      ${renderTagsRow()}
+      ${renderPriorityEssentialRow()}
+    </div>
+  `;
+
+  const renderIssueForm = () => {
+    const statusColors = {
+      open: 'bg-blue-100 border-blue-500 text-blue-800',
+      'in-progress': 'bg-amber-100 border-amber-500 text-amber-800',
+      blocked: 'bg-red-100 border-red-500 text-red-800',
+      resolved: 'bg-green-100 border-green-500 text-green-800',
+    };
+    const urgencyColors = {
+      high: 'bg-red-100 border-red-500 text-red-800',
+      medium: 'bg-amber-100 border-amber-500 text-amber-800',
+      low: 'bg-green-100 border-green-500 text-green-800',
+    };
+
+    return html`
+      <div class="space-y-6">
+        <!-- Title -->
+        <div>
+          <${TextInput}
+            label="Issue Summary"
+            required=${true}
+            value=${title}
+            onChange=${(v) => { setTitle(v); setDirty(true); }}
+            placeholder="e.g., SIPR token readers failing intermittently in Bldg 2100"
+          />
+          ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+        </div>
+
+        <!-- Issue Card -->
+        <div class="bg-red-50/20 border border-red-200 rounded-lg p-5 space-y-5">
+          <!-- Status: visual selector -->
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Status</label>
+            <div class="flex flex-wrap gap-2">
+              ${ISSUE_STATUS_OPTIONS.map(opt => html`
+                <button key=${opt.value} type="button"
+                  onClick=${() => { updateMeta('status', opt.value); setDirty(true); }}
+                  class=${'px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-all '
+                    + ((meta.status || 'open') === opt.value
+                      ? statusColors[opt.value] + ' shadow-sm'
+                      : 'border-slate-200 text-slate-500 hover:bg-slate-50')}>
+                  ${opt.label}
+                </button>
+              `)}
+            </div>
+          </div>
+
+          <!-- Urgency: visual selector -->
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-2">Urgency</label>
+            <div class="flex flex-wrap gap-2">
+              ${URGENCY_OPTIONS.map(opt => html`
+                <button key=${opt.value} type="button"
+                  onClick=${() => { updateMeta('urgency', opt.value); setDirty(true); }}
+                  class=${'px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-all '
+                    + ((meta.urgency || 'medium') === opt.value
+                      ? urgencyColors[opt.value] + ' shadow-sm'
+                      : 'border-slate-200 text-slate-500 hover:bg-slate-50')}>
+                  ${opt.label}
+                </button>
+              `)}
+            </div>
+          </div>
+
+          <!-- Opened Date -->
+          <div>
+            <label class="text-sm font-medium text-slate-700 block mb-1">Opened Date</label>
+            <input type="date"
+              value=${meta.openedDate || ''}
+              onChange=${(e) => { updateMeta('openedDate', e.target.value); setDirty(true); }}
+              class="w-full sm:w-48 px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
+                     text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+          </div>
+
+          <!-- Background -->
+          <${TextArea}
+            label="Background"
+            value=${issueBackground}
+            onChange=${(v) => { setIssueBackground(v); setDirty(true); }}
+            placeholder="What caused this issue? What's the context?"
+            rows=${3}
+          />
+
+          <!-- Current Status -->
+          <${TextArea}
+            label="Current Status"
+            value=${issueCurrentStatus}
+            onChange=${(v) => { setIssueCurrentStatus(v); setDirty(true); }}
+            placeholder="Where does this stand right now?"
+            rows=${3}
+          />
+
+          <!-- Next Steps -->
+          <${TextArea}
+            label="Next Steps"
+            value=${issueNextSteps}
+            onChange=${(v) => { setIssueNextSteps(v); setDirty(true); }}
+            placeholder="What needs to happen next?"
+            rows=${3}
+          />
+
+          <!-- Related Stakeholders -->
+          <${TextInput}
+            label="Related Stakeholders"
+            value=${meta.relatedStakeholders || ''}
+            onChange=${(v) => { updateMeta('relatedStakeholders', v); setDirty(true); }}
+            placeholder="Who is involved? (comma-separated)"
+          />
+        </div>
+
+        ${renderFileImport()}
+        ${renderTagsRow()}
+        ${renderPriorityEssentialRow()}
+      </div>
+    `;
+  };
+
+  // ─── Fallback: generic form for any category without a specific layout ────
+
+  const renderGenericForm = () => html`
+    <div class="space-y-6">
+      <div>
+        <${TextInput}
+          label="Title"
+          required=${true}
+          value=${title}
+          onChange=${(v) => { setTitle(v); setDirty(true); }}
+          placeholder="Descriptive title for this entry..."
+        />
+        ${errors.title && html`<p class="text-red-500 text-xs mt-1">${errors.title}</p>`}
+      </div>
+      ${renderFileImport()}
+      ${renderGenericContentEditor('Content', 'Write your knowledge here... Markdown is supported.', 10)}
+      ${renderTagsRow()}
+      ${renderPriorityEssentialRow()}
+    </div>
+  `;
+
+  // ─── Category form dispatcher ────────────────────────────────────────────
+
+  const renderCategoryForm = () => {
+    switch (category) {
+      case 'process':     return renderProcessForm();
+      case 'stakeholder': return renderStakeholderForm();
+      case 'calendar':    return renderCalendarForm();
+      case 'decision':    return renderDecisionForm();
+      case 'lesson':      return renderLessonForm();
+      case 'issue':       return renderIssueForm();
+      default:            return renderGenericForm();
+    }
   };
 
   // ═════════════════════════════════════════════════════════════════════════════
@@ -420,187 +1400,17 @@ export default function Capture() {
         </div>
       </div>
 
-      <!-- Main Form -->
-      <div class="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div class="p-6 space-y-6">
-
-          <!-- Title -->
-          <div>
-            <${TextInput}
-              label="Title"
-              required=${true}
-              value=${title}
-              onChange=${(v) => { setTitle(v); setDirty(true); }}
-              placeholder="Descriptive title for this entry..."
-            />
-            ${errors.title && html`
-              <p class="text-red-500 text-xs mt-1">${errors.title}</p>
-            `}
-          </div>
-
-          <!-- File Import -->
-          <div>
-            <button
-              type="button"
-              onClick=${() => setFileImportOpen(o => !o)}
-              class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"
-            >
-              <span class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                  class="text-slate-500">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="12" y1="18" x2="12" y2="12" />
-                  <polyline points="9 15 12 12 15 15" />
-                </svg>
-                Import from File
-              </span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class=${'transition-transform ' + (fileImportOpen ? '' : '-rotate-90')}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            ${fileImportOpen && html`
-              <div class="mt-2">
-                <${FileDropZone}
-                  onContent=${({ content: fileContent, title: fileTitle }) => {
-                    setContent(prev => prev ? prev + '\n\n' + fileContent : fileContent);
-                    if (!title.trim() && fileTitle) setTitle(fileTitle);
-                    showToast('File converted to markdown. Review and edit as needed.', 'success');
-                  }}
-                  onError=${(msg) => showToast(msg, 'error')}
-                />
-              </div>
-            `}
-          </div>
-
-          <!-- Content with Markdown Toggle -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-sm font-medium text-slate-700">
-                Content
-              </label>
-              <div class="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick=${() => setShowPreview(false)}
-                  class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
-                    + (!showPreview
-                      ? 'bg-navy-100 text-navy-700'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
-                  <span class="flex items-center gap-1">
-                    <${IconEdit} size=${14} />
-                    Write
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick=${() => setShowPreview(true)}
-                  class=${'px-2.5 py-1 text-xs font-medium rounded-md transition-colors '
-                    + (showPreview
-                      ? 'bg-navy-100 text-navy-700'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100')}>
-                  <span class="flex items-center gap-1">
-                    <${IconEye} size=${14} />
-                    Preview
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            ${!showPreview
-              ? html`
-                <textarea
-                  value=${content}
-                  onChange=${(e) => { setContent(e.target.value); setDirty(true); }}
-                  rows=${10}
-                  placeholder="Write your knowledge here... Markdown is supported."
-                  class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
-                         text-slate-700 placeholder-slate-400 resize-y font-mono
-                         focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
-                />
-              `
-              : html`
-                <div class="min-h-[240px] p-4 border border-slate-300 rounded-md bg-slate-50 overflow-auto">
-                  ${content.trim()
-                    ? html`<${MarkdownPreview} content=${content} />`
-                    : html`<p class="text-slate-400 italic text-sm">Nothing to preview.</p>`
-                  }
-                </div>
-              `
-            }
-            <p class="text-xs text-slate-400 mt-1">Supports Markdown: **bold**, *italic*, ## headings, - lists, \`code\`, etc.</p>
-          </div>
-
-          <!-- Tags -->
-          <div>
-            <label class="text-sm font-medium text-slate-700 block mb-1">Tags</label>
-            <div class="flex flex-wrap items-center gap-1.5 p-2 border border-slate-300 rounded-md bg-white
-                        focus-within:ring-2 focus-within:ring-navy-500 focus-within:border-navy-500 min-h-[42px]">
-              ${tags.map(tag => html`
-                <${Tag} key=${tag} label=${tag} onRemove=${() => removeTag(tag)} />
-              `)}
-              <input
-                ref=${tagInputRef}
-                type="text"
-                value=${tagInput}
-                onChange=${(e) => { setTagInput(e.target.value); setDirty(true); }}
-                onKeyDown=${handleTagKeyDown}
-                onBlur=${() => { if (tagInput.trim()) addTagsFromInput(); }}
-                placeholder=${tags.length === 0 ? 'Add tags (comma-separated)...' : 'Add more...'}
-                class="flex-1 min-w-[120px] px-1 py-1 text-sm border-0 outline-none bg-transparent placeholder-slate-400"
-              />
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Press Enter or comma to add. Backspace to remove last tag.</p>
-          </div>
-
-          <!-- Priority & Essential Reading row -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <${Select}
-              label="Priority"
-              value=${priority}
-              onChange=${(v) => { setPriority(v); setDirty(true); }}
-              options=${PRIORITIES.map(p => ({ value: p.id, label: p.label }))}
-            />
-            <div class="flex items-end pb-1">
-              <label class="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked=${essentialReading}
-                  onChange=${(e) => setEssentialReading(e.target.checked)}
-                  class="w-4 h-4 rounded border-slate-300 text-navy-700 focus:ring-navy-500"
-                />
-                <span class="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                  <${IconStar} size=${16} className="text-yellow-500" />
-                  Essential Reading
-                </span>
-                <span class="text-xs text-slate-400">(flags for Start Here list)</span>
-              </label>
-            </div>
-          </div>
+      <!-- Category-Specific Form -->
+      <div class=${'bg-white rounded-lg border-2 shadow-sm ' + formBorder}>
+        <div class=${'p-6 ' + formBgTint}>
+          ${renderCategoryForm()}
         </div>
       </div>
-
-      <!-- Category-Specific Meta Fields -->
-      ${category === 'stakeholder' && html`
-        <${StakeholderFields} meta=${meta} updateMeta=${updateMeta} errors=${errors} />
-      `}
-      ${category === 'calendar' && html`
-        <${CalendarFields} meta=${meta} updateMeta=${updateMeta} />
-      `}
-      ${category === 'decision' && html`
-        <${DecisionFields} meta=${meta} updateMeta=${updateMeta} />
-      `}
-      ${category === 'issue' && html`
-        <${IssueFields} meta=${meta} updateMeta=${updateMeta} />
-      `}
 
       <!-- AI Assist -->
       <${AIAssistPanel}
         title=${title}
-        content=${content}
+        content=${assembleContent()}
         category=${category}
         tags=${tags}
         priority=${priority}
@@ -834,247 +1644,3 @@ function AIAssistPanel({ title, content, category, tags, priority, isEdit, onAdd
   `;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Category-Specific Field Panels
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── Stakeholder Fields ──────────────────────────────────────────────────────
-
-function StakeholderFields({ meta, updateMeta, errors }) {
-  return html`
-    <div class="bg-white rounded-lg border border-green-200 shadow-sm">
-      <div class="px-6 py-3 border-b border-green-100 bg-green-50/50 rounded-t-lg">
-        <div class="flex items-center gap-2">
-          <${IconUsers} size=${16} className="text-green-600" />
-          <span class="text-sm font-semibold text-green-800">Stakeholder Details</span>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <${TextInput}
-              label="Billet Title"
-              required=${true}
-              value=${meta.billetTitle || ''}
-              onChange=${(v) => updateMeta('billetTitle', v)}
-              placeholder="e.g., S-3 Operations Officer"
-            />
-            ${errors.billetTitle && html`
-              <p class="text-red-500 text-xs mt-1">${errors.billetTitle}</p>
-            `}
-          </div>
-          <${TextInput}
-            label="Organization"
-            value=${meta.organization || ''}
-            onChange=${(v) => updateMeta('organization', v)}
-            placeholder="e.g., 1st Marine Division G-3"
-          />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <${TextInput}
-            label="Phone"
-            value=${meta.phone || ''}
-            onChange=${(v) => updateMeta('phone', v)}
-            placeholder="DSN or commercial"
-          />
-          <${TextInput}
-            label="Email"
-            value=${meta.email || ''}
-            onChange=${(v) => updateMeta('email', v)}
-            placeholder="official email"
-            type="email"
-          />
-        </div>
-        <${Select}
-          label="Contact Frequency"
-          value=${meta.contactFrequency || 'asNeeded'}
-          onChange=${(v) => updateMeta('contactFrequency', v)}
-          options=${FREQUENCY_OPTIONS}
-        />
-        <${TextArea}
-          label="Relationship Context"
-          value=${meta.relationshipContext || ''}
-          onChange=${(v) => updateMeta('relationshipContext', v)}
-          placeholder="Why do you contact this person? Under what circumstances? What do they need from you?"
-          rows=${4}
-        />
-      </div>
-    </div>
-  `;
-}
-
-// ─── Calendar Fields ─────────────────────────────────────────────────────────
-
-function CalendarFields({ meta, updateMeta }) {
-  const recurrence = meta.recurrence || 'annual';
-  const showMonth = recurrence === 'annual';
-  const showDayOfMonth = recurrence === 'annual' || recurrence === 'monthly';
-
-  return html`
-    <div class="bg-white rounded-lg border border-orange-200 shadow-sm">
-      <div class="px-6 py-3 border-b border-orange-100 bg-orange-50/50 rounded-t-lg">
-        <div class="flex items-center gap-2">
-          <${IconCalendar} size=${16} className="text-orange-600" />
-          <span class="text-sm font-semibold text-orange-800">Calendar Details</span>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <${Select}
-          label="Recurrence"
-          value=${recurrence}
-          onChange=${(v) => updateMeta('recurrence', v)}
-          options=${RECURRENCE_OPTIONS}
-        />
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          ${showMonth && html`
-            <${Select}
-              label="Month"
-              value=${meta.month || ''}
-              onChange=${(v) => updateMeta('month', v)}
-              options=${MONTH_OPTIONS}
-              placeholder="Select month..."
-            />
-          `}
-          ${showDayOfMonth && html`
-            <div>
-              <label class="text-sm font-medium text-slate-700 block mb-1">Day of Month</label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value=${meta.dayOfMonth || ''}
-                onChange=${(e) => updateMeta('dayOfMonth', e.target.value)}
-                placeholder="1-31"
-                class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
-                       text-slate-700 placeholder-slate-400
-                       focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
-              />
-            </div>
-          `}
-          <${TextInput}
-            label="Duration"
-            value=${meta.duration || ''}
-            onChange=${(v) => updateMeta('duration', v)}
-            placeholder='e.g., "2 weeks", "3 days"'
-          />
-        </div>
-        <div>
-          <label class="text-sm font-medium text-slate-700 block mb-1">Prep Lead Days</label>
-          <input
-            type="number"
-            min="0"
-            value=${meta.prepLeadDays || ''}
-            onChange=${(e) => updateMeta('prepLeadDays', e.target.value)}
-            placeholder="Days before event to start preparing"
-            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
-                   text-slate-700 placeholder-slate-400 sm:max-w-xs
-                   focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
-          />
-          <p class="text-xs text-slate-400 mt-1">How many days before the event should preparation begin?</p>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// ─── Decision Fields ─────────────────────────────────────────────────────────
-
-function DecisionFields({ meta, updateMeta }) {
-  return html`
-    <div class="bg-white rounded-lg border border-purple-200 shadow-sm">
-      <div class="px-6 py-3 border-b border-purple-100 bg-purple-50/50 rounded-t-lg">
-        <div class="flex items-center gap-2">
-          <${IconScale} size=${16} className="text-purple-600" />
-          <span class="text-sm font-semibold text-purple-800">Decision Details</span>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-medium text-slate-700 block mb-1">Decision Date</label>
-            <input
-              type="date"
-              value=${meta.decisionDate || ''}
-              onChange=${(e) => updateMeta('decisionDate', e.target.value)}
-              class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
-                     text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
-            />
-          </div>
-          <div class="flex items-end pb-1">
-            <label class="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked=${meta.reversible || false}
-                onChange=${(e) => updateMeta('reversible', e.target.checked)}
-                class="w-4 h-4 rounded border-slate-300 text-navy-700 focus:ring-navy-500"
-              />
-              <span class="text-sm font-medium text-slate-700">Reversible?</span>
-              <span class="text-xs text-slate-400">(can this decision be undone?)</span>
-            </label>
-          </div>
-        </div>
-        <${TextArea}
-          label="Alternatives Considered"
-          value=${meta.alternativesConsidered || ''}
-          onChange=${(v) => updateMeta('alternativesConsidered', v)}
-          placeholder="What other options were evaluated? Why were they rejected?"
-          rows=${3}
-        />
-        <${TextArea}
-          label="Outcome & Rationale"
-          value=${meta.outcomeRationale || ''}
-          onChange=${(v) => updateMeta('outcomeRationale', v)}
-          placeholder="What was decided and why? What were the key factors?"
-          rows=${3}
-        />
-      </div>
-    </div>
-  `;
-}
-
-// ─── Issue Fields ────────────────────────────────────────────────────────────
-
-function IssueFields({ meta, updateMeta }) {
-  return html`
-    <div class="bg-white rounded-lg border border-red-200 shadow-sm">
-      <div class="px-6 py-3 border-b border-red-100 bg-red-50/50 rounded-t-lg">
-        <div class="flex items-center gap-2">
-          <${IconFlag} size=${16} className="text-red-600" />
-          <span class="text-sm font-semibold text-red-800">Issue Details</span>
-        </div>
-      </div>
-      <div class="p-6 space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label class="text-sm font-medium text-slate-700 block mb-1">Opened Date</label>
-            <input
-              type="date"
-              value=${meta.openedDate || ''}
-              onChange=${(e) => updateMeta('openedDate', e.target.value)}
-              class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-md shadow-sm
-                     text-slate-700 focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
-            />
-          </div>
-          <${Select}
-            label="Status"
-            value=${meta.status || 'open'}
-            onChange=${(v) => updateMeta('status', v)}
-            options=${ISSUE_STATUS_OPTIONS}
-          />
-          <${Select}
-            label="Urgency"
-            value=${meta.urgency || 'medium'}
-            onChange=${(v) => updateMeta('urgency', v)}
-            options=${URGENCY_OPTIONS}
-          />
-        </div>
-        <${TextInput}
-          label="Related Stakeholders"
-          value=${meta.relatedStakeholders || ''}
-          onChange=${(v) => updateMeta('relatedStakeholders', v)}
-          placeholder="Names or references to stakeholder entries (comma-separated)"
-        />
-      </div>
-    </div>
-  `;
-}
